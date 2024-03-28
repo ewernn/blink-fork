@@ -30,7 +30,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #import "BKHosts.h"
-#import "BKMiniLog.h"
 #import "BKiCloudSyncHandler.h"
 #import "UICKeyChainStore.h"
 #import "BlinkPaths.h"

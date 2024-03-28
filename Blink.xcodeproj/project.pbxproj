@@ -448,7 +448,6 @@
 		D2DE0DCF260323F400A69B6F /* id_ed25519-passphrase in Resources */ = {isa = PBXBuildFile; fileRef = D2DE0DCD260323F400A69B6F /* id_ed25519-passphrase */; };
 		D2DE0DD0260323F400A69B6F /* id_ed25519-passphrase.pub in Resources */ = {isa = PBXBuildFile; fileRef = D2DE0DCE260323F400A69B6F /* id_ed25519-passphrase.pub */; };
 		D2DE0DDE260331F300A69B6F /* NewKeyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2DE0DDD260331F300A69B6F /* NewKeyView.swift */; };
-		D2DE9CA626EA1CC000A0B29C /* BKMiniLog.m in Sources */ = {isa = PBXBuildFile; fileRef = D22A353726C1474200943C71 /* BKMiniLog.m */; };
 		D2E5454527C4C83C002635A2 /* FeedbackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2E5454427C4C83C002635A2 /* FeedbackView.swift */; };
 		D2E5454A27C4D422002635A2 /* SupportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2E5454927C4D422002635A2 /* SupportView.swift */; };
 		D2E66D142695B100007D42AA /* HostListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2E66D132695B100007D42AA /* HostListView.swift */; };
@@ -999,8 +998,6 @@
 		D22278122A2631E700D4C708 /* SnippetsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnippetsViewController.swift; sourceTree = "<group>"; };
 		D22378FC27A7B8DA002D5C6D /* XCConfig.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = XCConfig.h; sourceTree = "<group>"; };
 		D22378FD27A7B8DA002D5C6D /* XCConfig.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = XCConfig.m; sourceTree = "<group>"; };
-		D22A353626C1474200943C71 /* BKMiniLog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BKMiniLog.h; sourceTree = "<group>"; };
-		D22A353726C1474200943C71 /* BKMiniLog.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BKMiniLog.m; sourceTree = "<group>"; };
 		D22B16D728CF6ED20004EEC1 /* NewPasskeyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewPasskeyView.swift; sourceTree = "<group>"; };
 		D231F5062A54478800ED82B0 /* BlinkMenu.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BlinkMenu.m; sourceTree = "<group>"; };
 		D231F5082A54479400ED82B0 /* BlinkMenu.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BlinkMenu.h; sourceTree = "<group>"; };
@@ -1833,8 +1830,6 @@
 				BDCB7175268E15A2007D7047 /* SEKey.swift */,
 				BDCB716D268E15A1007D7047 /* UICKeyChainStore.h */,
 				BDCB716E268E15A1007D7047 /* UICKeyChainStore.m */,
-				D22A353626C1474200943C71 /* BKMiniLog.h */,
-				D22A353726C1474200943C71 /* BKMiniLog.m */,
 				BDCB7161268E1577007D7047 /* Info.plist */,
 				D22378FC27A7B8DA002D5C6D /* XCConfig.h */,
 				D22378FD27A7B8DA002D5C6D /* XCConfig.m */,
@@ -3203,7 +3198,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				BDD6D149275951D900E76F1F /* BKGlobalSSHConfig.swift in Sources */,
-				D2DE9CA626EA1CC000A0B29C /* BKMiniLog.m in Sources */,
 				BDCB7179268E15A2007D7047 /* BKHosts.m in Sources */,
 				BDCB7182268E15A2007D7047 /* SEKey.swift in Sources */,
 				BDCB7178268E15A2007D7047 /* BKHosts.swift in Sources */,

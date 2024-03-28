@@ -33,7 +33,6 @@
 
 #import <Foundation/Foundation.h>
 #import "BKPubKey.h"
-#import "BKMiniLog.h"
 #import "UICKeyChainStore.h"
 
 #import <BlinkConfig/BlinkConfig-Swift.h>
