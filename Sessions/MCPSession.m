@@ -82,7 +82,6 @@
 
     NSString *homePath = [BlinkPaths homePath];
     ios_setMiniRoot(homePath);
-    [[NSFileManager defaultManager] changeCurrentDirectoryPath:homePath];
     [self updateAllowedPaths];
 
     // We are restoring mosh session if possible first.
