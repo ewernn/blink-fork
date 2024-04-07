@@ -29,6 +29,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+import ArgumentParser
 import Combine
 import CryptoKit
 
@@ -40,14 +41,15 @@ import SSH
 let MoshServerRemotePath = ".local/blink"
 let MoshServerBinaryName  = "mosh-server"
 let MoshServerVersion     = "1.4.0"
-let MoshServerDownloadPathURL = URL(string: "https://github.com/blinksh/mosh-static-multiarch/releases/latest/download/")!
-// TODO
+let MoshServerBlinkVersion = "17.3.0"
+let MoshServerDownloadPathURL = URL(string: "https://github.com/blinksh/mosh-static-multiarch/releases/download/\(MoshServerVersion)%2Bblink-\(MoshServerBlinkVersion)/")!
+
 fileprivate enum Checksum {
-  static let DarwinArm64 = "24df62e8f1490f5dc58a8ae50ae39957d5bf80d57f5f07fa81d46199b890dfd3"
-  static let DarwinX86_64 = "f4b7ed42a54d0ea743a157179eb0aaa9e30d2e67b869217c158f331ae396f317"
-  static let LinuxAmd64 = "e7aa244fbd0466273ae2ad34f3c26ba7b660438ee8635d7180950e255384b906"
-  static let LinuxArm64 = "9a2b5cc731664eb18f46a9aa14886c341b21d2f08ca798b6ea8c4e61313489e0"
-  static let LinuxArmv7 = "930aa3b4a40bf67fa56a17cfc3ba119cc7fa0f0bbd1760562ef0f9cefbc0466e"
+  static let DarwinArm64 = "3cdc2cf180bda497264049f43cb97557f6827795e7e612ad69ac02ea0096cbc4"
+  static let DarwinX86_64 = "bf42e75ab1ad3beca899da18a3f154e0e6c9c4ef5507a2e5fbc945d404ce1168"
+  static let LinuxAmd64 = "b91598a54627736bc7bedb06edbe0b5da5dcbb6838850fcb4f93a7d8ac88897c"
+  static let LinuxArm64 = "70781d8a41f56000491ac646c550b0a58b743081e6a1597afc0a38441a4320ff"
+  static let LinuxArmv7 = "3491d30e35cb4a0d777d50b24fb898f0a1f6f52389fefac246c1154f095de485"
   static func validate(data: Data, platform: Platform, architecture: Architecture) -> Bool {
     let hash = SHA256.hash(data: data)
     let hexHash = hash.map { byte in  String(format: "%02x", byte)}.joined()
@@ -59,12 +61,13 @@ fileprivate enum Checksum {
       checksum = Self.DarwinArm64
     case (.Linux, .Amd64):
       checksum = Self.LinuxAmd64
+    case (.Linux, .X86_64):
+      checksum = Self.LinuxAmd64
     case (.Linux, .Arm64):
       checksum = Self.LinuxArm64
     case (.Linux, .Armv7):
       checksum = Self.LinuxArmv7
-    case (.Linux, .X86_64):
-      checksum = Self.LinuxAmd64
+    
     default:
       return false
     }
@@ -104,7 +107,6 @@ extension Platform: CustomStringConvertible {
 enum Architecture {
   case X86_64
   case Amd64
-  case Aarch64
   case Arm64
   case Armv7
 }
@@ -131,18 +133,24 @@ extension Architecture {
 }
 
 extension Architecture {
-  public var downloadableDescription: String {
-    switch self {
-    case .X86_64:
-      return "amd64"
-    case .Aarch64:
+  public func downloadableDescription(for platform: Platform) throws -> String {
+    switch (platform, self) {
+    case (.Darwin, .X86_64):
+      return "x86_64"
+    case (.Darwin, .Amd64):
+      return "x86_64"
+    case (.Darwin, .Arm64):
       return "arm64"
-    case .Arm64:
-      return "arm64"
-    case .Amd64:
+    case (.Linux, .Amd64):
       return "amd64"
-    case .Armv7:
+    case (.Linux, .X86_64):
+      return "amd64"
+    case (.Linux, .Arm64):
+      return "arm64"
+    case (.Linux, .Armv7):
       return "armv7"
+    default:
+      throw MoshError.NoBinaryAvailable
     }
   }
 }
@@ -169,12 +177,21 @@ class UseMoshOnPath: MoshBootstrap {
 }
 
 class InstallStaticMosh: MoshBootstrap {
+  let pathToStatic: String?
   let promptUser: Bool
   let onCancel: () -> ()
   let logger: MoshLogger
 
   init(promptUser: Bool = true, onCancel: @escaping () -> () = {}, logger: MoshLogger) {
+    self.pathToStatic = nil
     self.promptUser = promptUser
+    self.onCancel = onCancel
+    self.logger = logger
+  }
+  
+  init(fromPath pathToStatic: String, onCancel: @escaping () -> () = {}, logger: MoshLogger) {
+    self.pathToStatic = pathToStatic
+    self.promptUser = false
     self.onCancel = onCancel
     self.logger = logger
   }
@@ -183,21 +200,30 @@ class InstallStaticMosh: MoshBootstrap {
     let log = logger.log("InstallStaticMosh")
     let prompt = InstallStaticMoshPrompt()
     
-    return Just(())
-      .flatMap { [unowned self] in self.platformAndArchitecture(on: client) }
-      .tryMap { pa in
-        guard let platform = pa?.0,
-              let architecture = pa?.1 else {
-          throw MoshError.NoBinaryAvailable
-        }
+    let getMoshServerBinary: AnyPublisher<Translator, Error>
+    if let pathToStatic = self.pathToStatic {
+      getMoshServerBinary = Local().cloneWalkTo(pathToStatic)
+      
+    } else {
+      getMoshServerBinary = Just(())
+        .flatMap { [unowned self] in self.platformAndArchitecture(on: client) }
+        .tryMap { pa in
+          guard let platform = pa?.0,
+                let architecture = pa?.1 else {
+            throw MoshError.NoBinaryAvailable
+          }
 
-        if !self.promptUser || prompt.installMoshRequest() {
-          return (platform, architecture)
-        } else {
-          throw MoshError.UserCancelled
+          if !self.promptUser || prompt.installMoshRequest() {
+            return (platform, architecture)
+          } else {
+            throw MoshError.UserCancelled
+          }
         }
-      }
-      .flatMap { [unowned self] in self.getMoshServerBinary(platform: $0, architecture: $1) }
+        .flatMap { [unowned self] in self.getMoshServerBinary(platform: $0, architecture: $1) }
+        .eraseToAnyPublisher()
+    }
+    
+    return getMoshServerBinary
       .flatMap { [unowned self] in self.installMoshServerBinary(on: client, localMoshServerBinary: $0) }
       .print()
       .eraseToAnyPublisher()
@@ -227,13 +253,20 @@ class InstallStaticMosh: MoshBootstrap {
   }
 
   func getMoshServerBinary(platform: Platform, architecture: Architecture) -> AnyPublisher<Translator, Error> {
-    let moshServerReleaseName = "\(MoshServerBinaryName)-\(MoshServerVersion)-\(platform)-\(architecture.downloadableDescription)"
+    let downloadable: String
+    do {
+      downloadable = try architecture.downloadableDescription(for: platform)
+    } catch {
+      return Fail(error: error).eraseToAnyPublisher()
+    }
+    
+    let moshServerReleaseName = "\(MoshServerBinaryName)-\(MoshServerVersion)+blink-\(MoshServerBlinkVersion)-\(platform)-\(downloadable)"
     let localMoshServerURL = BlinkPaths.blinkURL().appending(path: moshServerReleaseName)
     let moshServerDownloadURL = MoshServerDownloadPathURL.appending(path: moshServerReleaseName)
     let log = logger.log("getMoshServerBinary")
     let prompt = InstallStaticMoshPrompt()
     
-    log.info("\(platform) \(architecture.downloadableDescription)")
+    log.info("\(platform) \(architecture)")
     return Local().cloneWalkTo(localMoshServerURL.path)
       .catch { _ in
         log.info("Downloading \(moshServerDownloadURL)")
@@ -266,51 +299,53 @@ class InstallStaticMosh: MoshBootstrap {
     return client.requestSFTP()
       .tryMap { try SFTPTranslator(on: $0) }
       .flatMap { sftp in
-        sftp.cloneWalkTo(moshServerBinaryPath)
+        prompt.showUploadProgress(cancellationHandler: { [weak self] in self?.onCancel() })
+        return sftp.cloneWalkTo(moshServerRemotePath.standardizingPath)
           .catch { _ in
-            prompt.showUploadProgress(cancellationHandler: { [weak self] in self?.onCancel() })
-            return sftp.cloneWalkTo(moshServerRemotePath.standardizingPath)
-              .catch { _ in
-                log.info("Path not found: \(moshServerRemotePath.standardizingPath). Creating it...")
-                return sftp.mkPath(path: moshServerRemotePath.standardizingPath)
-              }
-              // Upload file
-              .flatMap { dest in
-                dest.copy(from: [localMoshServerBinary])
-                  .tryMap { info in
-                    uploaded += info.written
-                    let percentage = Float(uploaded) / Float(info.size)
-                    // Tested. If something happens, it closes properly.
-                    // if percentage > 0.5 { throw MoshError.UserCancelled }
-                    prompt.progressUpdate(percentage)
-                  }
-              }
-              .last()
-              .flatMap { _ -> AnyPublisher<Translator, Error> in
-                let uploadedBinaryPath = moshServerRemotePath
-                  .appendingPathComponent((localMoshServerBinary.current as NSString).lastPathComponent)
-                log.info("File uploaded at \(uploadedBinaryPath). Moving to \(moshServerBinaryPath)")
-
-                return sftp.cloneWalkTo(uploadedBinaryPath)
-                  .flatMap { $0.wstat([.name: MoshServerBinaryName]) }
-                  .flatMap { _ in sftp.cloneWalkTo(moshServerBinaryPath) }
-                  .eraseToAnyPublisher()
+            log.info("Path not found: \(moshServerRemotePath.standardizingPath). Creating it...")
+            return sftp.mkPath(path: moshServerRemotePath.standardizingPath)
+          }
+        // Upload file
+          .flatMap { dest in
+            dest.copy(from: [localMoshServerBinary])
+              .tryMap { info in
+                uploaded += info.written
+                let percentage = Float(uploaded) / Float(info.size)
+                // Tested. If something happens, it closes properly.
+                // if percentage > 0.5 { throw MoshError.UserCancelled }
+                prompt.progressUpdate(percentage)
               }
           }
-          .map { $0.current }
-          // Set execution flag.
-          .flatMap { moshPath in
-            let command = "chmod +x \(moshPath)"
-            log.info("chmod +x \(moshPath)")
-            return client.requestExec(command: command)
-              .flatMap { $0.read_err(max: 1024) }
-              .tryMap { err_out in
-                prompt.progressUpdate(1.0)
-                if err_out.count > 0 {
-                  log.error("chmod err: \(err_out)")
-                  throw MoshError.NoBinaryExecFlag
-                } else { return moshPath }
+          .last()
+          .flatMap { _ -> AnyPublisher<Translator, Error> in
+            let uploadedBinaryPath = moshServerRemotePath
+              .appendingPathComponent((localMoshServerBinary.current as NSString).lastPathComponent)
+            log.info("File uploaded at \(uploadedBinaryPath). Moving to \(moshServerBinaryPath)")
+            
+            
+            return sftp.cloneWalkTo(moshServerBinaryPath)
+              .flatMap { t in
+                t.remove().flatMap { _ in sftp.cloneWalkTo(uploadedBinaryPath) }
               }
+              .catch { _ in sftp.cloneWalkTo(uploadedBinaryPath) }
+              .flatMap { $0.wstat([.name: MoshServerBinaryName]) }
+              .flatMap { _ in sftp.cloneWalkTo(moshServerBinaryPath) }
+              .eraseToAnyPublisher()
+          }
+      }
+      .map { $0.current }
+    // Set execution flag.
+      .flatMap { moshPath in
+        let command = "chmod +x \(moshPath)"
+        log.info("chmod +x \(moshPath)")
+        return client.requestExec(command: command)
+          .flatMap { $0.read_err(max: 1024) }
+          .tryMap { err_out in
+            prompt.progressUpdate(1.0)
+            if err_out.count > 0 {
+              log.error("chmod err: \(err_out)")
+              throw MoshError.NoBinaryExecFlag
+            } else { return moshPath }
           }
       }
       .eraseToAnyPublisher()

@@ -58,8 +58,9 @@ final class MoshBootstrapTests: XCTestCase {
     print("connected")
     
     let expectBootstrap = self.expectation(description: "Mosh bootstrapped")
+    let logger = MoshLogger(output: OutputStream(file: stdout))
 
-    InstallStaticMosh(promptUser: false)
+    InstallStaticMosh(promptUser: false, logger: logger)
       .start(on: connection)
       .sink(
         receiveCompletion: { _ in },
@@ -73,7 +74,8 @@ final class MoshBootstrapTests: XCTestCase {
   }
   
   func testMoshDownloadBinaries() throws {
-    let moshBootstrap = InstallStaticMosh(promptUser: false)
+    let logger = MoshLogger(output: OutputStream(file: stdout), logLevel: .info)
+    let moshBootstrap = InstallStaticMosh(promptUser: false, logger: logger)
     
     moshBootstrap.getMoshServerBinary(platform: .Darwin, architecture: .X86_64)
       .assertNoFailure()

@@ -44,7 +44,7 @@ enum MoshError: Error, LocalizedError {
   case NoRemoteServerIP
   case AddressInfo(String)
   case MissingArguments(String)
-  
+
   public var errorDescription: String? {
     switch self {
     case .NoBinaryAvailable:
@@ -159,7 +159,7 @@ enum MoshError: Error, LocalizedError {
 
       // Resolved as part of the host info or explicit on params.
       let remoteIP = hostName
-      moshServerParams = MoshServerParams(key: customKey, udpPort: customUDPPort, remoteIP: remoteIP)
+      moshServerParams = MoshServerParams(key: customKey, udpPort: customUDPPort, remoteIP: remoteIP, versionString: nil)
       log.info("Manual Mosh server bootstrapped with params \(moshServerParams)")
     } else {
       let moshServerStartupArgs = getMoshServerStartupArgs(udpPort: moshClientParams.customUDPPort,
@@ -170,21 +170,23 @@ enum MoshError: Error, LocalizedError {
       // NOTE This is an extra non-standard parameter, so don't want to change the typical mosh flow. Some may
       // install it by mistake and in some cases, this could be a security concern.
       if command.installStatic {
-        sequence = [UseMoshOnPath.staticMosh(),
-                    InstallStaticMosh(onCancel: { [weak self] in self?.kill() }, logger: self.logger)]
+        sequence = [//UseMoshOnPath.staticMosh(),
+          InstallStaticMosh(onCancel: { [weak self] in self?.kill() }, logger: self.logger)]
+      } else if let staticPath = command.installStaticFromPath {
+        sequence = [InstallStaticMosh(fromPath: staticPath, onCancel: { [weak self] in self?.kill() }, logger: self.logger)]
       } else if moshClientParams.server != "mosh-server" {
         sequence = [UseMoshOnPath(path: moshClientParams.server)]
       } else {
         sequence = [UseMoshOnPath.staticMosh(), UseMoshOnPath(path: moshClientParams.server)]
       }
-      
+
       let pty: SSH.SSHClient.PTY?
       if command.noSshPty {
         pty = nil
       } else {
         pty = SSH.SSHClient.PTY(rows: Int32(self.device.rows), columns: Int32(self.device.cols))
       }
-      
+
       var sshError: Error? = nil
       var _moshServerParams: MoshServerParams? = nil
       self.sshCancellable = SSHClient.dial(hostName, with: config, withProxy: { [weak self] in
@@ -195,26 +197,26 @@ enum MoshError: Error, LocalizedError {
         self.mcpSession.setActiveSession()
         self.executeProxyCommand(command: $0, sockIn: $1, sockOut: $2)
       })
-        .flatMap { self.bootstrapMoshServer(on: $0,
-                                            sequence: sequence,
-                                            experimentalRemoteIP: moshClientParams.experimentalRemoteIP,
-                                            family: command.addressFamily,
-                                            args: moshServerStartupArgs,
-                                            withPTY: pty) }
-        //.print()
-        .sink(
-          receiveCompletion: { completion in
-            switch completion {
-            case .failure(let error):
-              sshError = error
-            default:
-              break
-            }
-            self.kill()
-          },
-          receiveValue: { params in
-            _moshServerParams = params
-          })
+      .flatMap { self.bootstrapMoshServer(on: $0,
+                                          sequence: sequence,
+                                          experimentalRemoteIP: moshClientParams.experimentalRemoteIP,
+                                          family: command.addressFamily,
+                                          args: moshServerStartupArgs,
+                                          withPTY: pty) }
+      //.print()
+      .sink(
+        receiveCompletion: { completion in
+          switch completion {
+          case .failure(let error):
+            sshError = error
+          default:
+            break
+          }
+          self.kill()
+        },
+        receiveValue: { params in
+          _moshServerParams = params
+        })
 
       self.isRunloopRunning = true
       SSHClient.run()
@@ -229,6 +231,10 @@ enum MoshError: Error, LocalizedError {
       }
       moshServerParams = _moshServerParams
       log.info("Remote Mosh server bootstrapped with params \(moshServerParams)")
+
+      if moshServerParams.isRunningOlderStaticVersion() {
+        print("New Blink mosh-server available. Use --install-static to update.", to: &self.stderr)
+      }
     }
 
     return MoshParams(server: moshServerParams, client: moshClientParams)
@@ -249,9 +255,9 @@ enum MoshError: Error, LocalizedError {
        let ccharLocalesPath = localesPath.cString(using: .utf8) {
       setenv("PATH_LOCALE", ccharLocalesPath, 1)
     }
-    
+
     self.sessionParams.cleanEncodedState()
-    
+
     mosh_main(
       self.stdin.file,
       self.stdout.file,
@@ -274,7 +280,7 @@ enum MoshError: Error, LocalizedError {
                                  colors: String?,
                                  exec: String?) -> String {
     let localeFallback = "LANG=\(String(cString: getenv("LANG")))"
-    
+
     var args = ["new", "-s", "-c", colors ?? "256", "-l", localeFallback]
 
     if let udpPort = udpPort {
@@ -295,7 +301,7 @@ enum MoshError: Error, LocalizedError {
                                    withPTY pty: SSH.SSHClient.PTY? = nil) -> AnyPublisher<MoshServerParams, Error> {
     let log = logger.log("bootstrapMoshServer")
     log.info("Trying bootstrap with sequence: \(sequence), experimental: \(experimentalRemoteIP), family: \(family), args: \(args)")
-    
+
     if sequence.isEmpty {
       return Fail(error: MoshError.NoBinaryAvailable).eraseToAnyPublisher()
     }
@@ -321,7 +327,7 @@ enum MoshError: Error, LocalizedError {
           return client.requestExec(command: $0, withPTY: pty)
         }
         .flatMap { s -> AnyPublisher<DispatchData, Error> in
-          // The PTY will multiplex, so we only try to parse stdout in all cases.
+          // The SSH PTY will multiplex, so we only try to parse stdout in all cases.
           s.read(max: 1024).eraseToAnyPublisher() //.zip(s.read_err(max: 1024)).eraseToAnyPublisher()
         }
         .flatMap { data -> AnyPublisher<MoshServerParams, Error> in
@@ -376,8 +382,8 @@ enum MoshError: Error, LocalizedError {
     guard let port = (port ?? "22").cString(using: .utf8) else {
       throw MoshError.AddressInfo("Invalid port")
     }
-    
-    let ai_family = { 
+
+    let ai_family = {
       switch family {
       case .IPv4:
         AF_INET
@@ -387,7 +393,7 @@ enum MoshError: Error, LocalizedError {
         AF_UNSPEC
       }
     }()
-    
+
     var hints = addrinfo(
       ai_flags: 0,
       ai_family: ai_family,
@@ -424,7 +430,7 @@ enum MoshError: Error, LocalizedError {
 
       return String(cString: buffer)
     }
-    
+
     throw MoshError.AddressInfo("Could not resolve address through getnameinfo.")
   }
 
@@ -452,7 +458,7 @@ enum MoshError: Error, LocalizedError {
       shutdown(sockOut, SHUT_RDWR)
       return
     }
-    
+
     let outStream = DispatchOutputStream(stream: sockOut)
     let inStream = DispatchInputStream(stream: sockIn)
 
@@ -473,13 +479,13 @@ enum MoshError: Error, LocalizedError {
             self.proxyStream = s
             s.connect(stdout: outStream, stdin: inStream)
           })
-      
+
       SSHClient.run()
       print("Mosh proxy thread out")
     }.start()
-    
+
   }
-  
+
   @objc public override func kill() {
     if isRunloopRunning {
       proxyStream?.cancel()
@@ -507,13 +513,13 @@ enum MoshError: Error, LocalizedError {
   @objc public override func sigwinch() {
     pthread_kill(self.tid, SIGWINCH);
   }
-  
+
   @objc public override func handleControl(_ control: String!) {
     if isRunloopRunning {
       self.kill()
     }
   }
-  
+
   func onStateEncoded(_ encodedState: Data) {
     self.sessionParams.encodedState = encodedState
     print("Encoding session")
@@ -527,7 +533,7 @@ enum MoshError: Error, LocalizedError {
     print("Use mosh1 for the deprecated (previous) mosh version.", to: &stderr)
     return -1
   }
-  
+
   deinit {
     print("Mosh is out")
   }
@@ -561,7 +567,7 @@ struct MoshLogger {
       }
     )
   }
-  
+
   func log(_ component: String) -> BlinkLogger {
     BlinkLogger(component, handlers: handler)
   }

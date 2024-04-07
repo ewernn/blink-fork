@@ -43,7 +43,13 @@ struct MoshCommand: ParsableCommand {
 
   @Flag(help: "Use Blink's static mosh-server bin on remote .local/blink.")
   var installStatic: Bool = false
-  
+
+  @Option(
+    name: [.customLong("install-static-from")],
+    help: "Install custom static mosh-server from path."
+  )
+  var installStaticFromPath: String?
+
   @Option(name: .shortAndLong,
           help: "Path to remote mosh-server binary.")
   var server: String?
@@ -58,7 +64,7 @@ struct MoshCommand: ParsableCommand {
     name: [.customShort("o")]
   )
   var predictOverwrite: Bool = false
-  
+
   @Flag var verbose: Bool = false
 
   @Flag (
@@ -66,17 +72,17 @@ struct MoshCommand: ParsableCommand {
     help: "Do not start a TTY"
   )
   var noSshPty: Bool = false
-  
+
   @Option(
     name: [.customShort("R")],
     help: "How to discover the IP address that the mosh-client connects to: default, remote or local",
     transform: { try BKMoshExperimentalIP(parsing: $0) }
   )
   var experimentalRemoteIP: BKMoshExperimentalIP?
-  
+
   @Flag(exclusivity: .exclusive)
   var addressFamily: AddressFamily?
-  
+
   // Mosh Key
   @Option(
     name: [.customShort("k")],
@@ -138,7 +144,7 @@ struct MoshCommand: ParsableCommand {
       }
     }
   }
-  
+
   func validate() throws {
     if addressFamily != nil && experimentalRemoteIP != BKMoshExperimentalIPLocal {
       throw ValidationError("Address Family can only be used with 'local' IP resolution (-R).")
@@ -222,7 +228,7 @@ extension BKMoshExperimentalIP {
 enum AddressFamily: String, EnumerableFlag {
   case IPv4
   case IPv6
-  
+
   static func name(for value: AddressFamily) -> NameSpecification {
     switch value {
     case .IPv4:
@@ -231,7 +237,7 @@ enum AddressFamily: String, EnumerableFlag {
       return NameSpecification([.customShort(Character("6")), .customLong("inet6")])
     }
   }
-  
+
   static func help(for value: AddressFamily) -> ArgumentHelp? {
     switch value {
     case .IPv4:

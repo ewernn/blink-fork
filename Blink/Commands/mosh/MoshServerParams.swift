@@ -37,6 +37,7 @@ struct MoshServerParams {
   let key: String
   let udpPort: String
   let remoteIP: String
+  let versionString: String?
 }
 
 extension MoshServerParams {
@@ -72,6 +73,32 @@ extension MoshServerParams {
       self.key = String(output[Range(connectMatch.range(at: 2), in: output)!])
     } else {
       throw MoshError.NoMoshServerArgs
+    }
+
+    let versionStringPattern = try! NSRegularExpression(
+      pattern: "\\+blink-(\\d+\\.\\d+\\.\\d+)",
+      options: []
+    )
+    if let versionStringMatch = versionStringPattern.firstMatch(
+      in: output,
+      options: [],
+      range: NSRange(output.startIndex..., in: output)
+    ) {
+      self.versionString = String(output[Range(versionStringMatch.range(at: 1), in: output)!])
+    } else {
+      self.versionString = nil
+    }
+  }
+
+  func isRunningOlderStaticVersion() -> Bool {
+    guard let versionString = self.versionString else {
+      return false
+    }
+
+    if MoshServerBlinkVersion.compare(versionString, options: .numeric) == .orderedDescending {
+      return true
+    } else {
+      return false
     }
   }
 }
