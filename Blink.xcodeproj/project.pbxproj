@@ -194,6 +194,9 @@
 		BDE84C3C2BAE335100457391 /* vim in Resources */ = {isa = PBXBuildFile; fileRef = BDE84C3B2BAE335100457391 /* vim */; };
 		BDE84C512BB233FB00457391 /* bc_ios.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = BDE84C502BB233F100457391 /* bc_ios.xcframework */; };
 		BDE84C522BB233FB00457391 /* bc_ios.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BDE84C502BB233F100457391 /* bc_ios.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		BDF2B8D32BC480CC00B9C7EA /* vim.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BDE84C772BB33AD700457391 /* vim.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		BDF2B8D52BC480D100B9C7EA /* xxd.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BDE84C762BB33AB800457391 /* xxd.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		BDF2B8D82BC4820F00B9C7EA /* curl_ios.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BDF2B8D62BC481F000B9C7EA /* curl_ios.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		BDF471BA268CD17B00A7A41B /* SSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 07FABB8425C9AEC000E1CC2C /* SSH.framework */; };
 		C94437571D8311960096F84E /* BKResource.m in Sources */ = {isa = PBXBuildFile; fileRef = C94437561D8311960096F84E /* BKResource.m */; };
 		C94437601D831CD30096F84E /* Themes in Resources */ = {isa = PBXBuildFile; fileRef = C944375F1D831CD30096F84E /* Themes */; };
@@ -302,7 +305,6 @@
 		D23EA945260379EB00BCF1FF /* KeyListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D23EA944260379EB00BCF1FF /* KeyListView.swift */; };
 		D23EA9592604CB4C00BCF1FF /* FixedTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = D23EA9582604CB4B00BCF1FF /* FixedTextField.swift */; };
 		D23FFC6A261C2D46003E9227 /* template_setup.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = D23FFC69261C2D46003E9227 /* template_setup.xcconfig */; };
-		D240806120BC8DF800F30099 /* tool_main.c in Sources */ = {isa = PBXBuildFile; fileRef = D240806020BC8DF800F30099 /* tool_main.c */; settings = {COMPILER_FLAGS = "-DHAVE_CONFIG_H -I Frameworks/ios_system/curl/curl/include/ -I Frameworks/ios_system/curl/curl/lib/ -I Frameworks/ios_system/curl/config_iphone/ -DBUILDING_LIBCURL -I Settings/Model/ -I Frameworks/libssh2.framework/Headers/ -DBLINKSHELL -I Frameworks/ios_system/"; }; };
 		D241CBD023040734003D64A5 /* KBKeyViewFlexible.swift in Sources */ = {isa = PBXBuildFile; fileRef = D241CBBE23040732003D64A5 /* KBKeyViewFlexible.swift */; };
 		D241CBD123040734003D64A5 /* KBKeyViewArrows.swift in Sources */ = {isa = PBXBuildFile; fileRef = D241CBBF23040732003D64A5 /* KBKeyViewArrows.swift */; };
 		D241CBD223040734003D64A5 /* KBDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = D241CBC023040733003D64A5 /* KBDevice.swift */; };
@@ -462,7 +464,6 @@
 		D2F330D420A6F1DF0074ADD7 /* clear.m in Sources */ = {isa = PBXBuildFile; fileRef = D2F330D320A6F1DF0074ADD7 /* clear.m */; };
 		D2F330D620A6F4F50074ADD7 /* history.m in Sources */ = {isa = PBXBuildFile; fileRef = D2F330D520A6F4F50074ADD7 /* history.m */; };
 		D2F330DA20A7127B0074ADD7 /* open.m in Sources */ = {isa = PBXBuildFile; fileRef = D2F330D920A7127B0074ADD7 /* open.m */; };
-		D2F64CA925CAA92700F2225D /* curl_ios_static.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D2E4F92E20B2BB4500B30F7B /* curl_ios_static.framework */; };
 		D2F64CAF25CAAA3300F2225D /* libssh2.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D2F64C9525CA99AD00F2225D /* libssh2.xcframework */; };
 		D2F64CB125CAAAD100F2225D /* ssh_cmd.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D2334EC825C1C04700385378 /* ssh_cmd.xcframework */; };
 		D2FBEC0B27CF505D00FD974A /* browse.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2FBEC0727CF505D00FD974A /* browse.swift */; };
@@ -673,13 +674,6 @@
 			remoteGlobalIDString = BDBFA3042728914F00C77798;
 			remoteInfo = BlinkCode;
 		};
-		D2E4F92D20B2BB4500B30F7B /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = D2E4F92920B2BB4500B30F7B /* curl_ios_static.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 2219DFCF1FD73AF500675252;
-			remoteInfo = curl_ios_static;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -691,9 +685,12 @@
 			files = (
 				D2A9B2F8272E6F26009FCBDE /* BlinkCode.framework in Embed Frameworks */,
 				D2C7710826EA49AA001B5659 /* openssl.xcframework in Embed Frameworks */,
+				BDF2B8D32BC480CC00B9C7EA /* vim.xcframework in Embed Frameworks */,
+				BDF2B8D52BC480D100B9C7EA /* xxd.xcframework in Embed Frameworks */,
 				D2334F0125C1C28F00385378 /* shell.xcframework in Embed Frameworks */,
 				07FABB9A25C9AEC100E1CC2C /* SSH.framework in Embed Frameworks */,
 				BDCB7166268E1577007D7047 /* BlinkConfig.framework in Embed Frameworks */,
+				BDF2B8D82BC4820F00B9C7EA /* curl_ios.xcframework in Embed Frameworks */,
 				D24AFD59222410E700CFD3C1 /* MBProgressHUD.framework in Embed Frameworks */,
 				D2334F0725C1C28F00385378 /* text.xcframework in Embed Frameworks */,
 				BDE84C522BB233FB00457391 /* bc_ios.xcframework in Embed Frameworks */,
@@ -919,6 +916,7 @@
 		BDE84C762BB33AB800457391 /* xxd.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = xxd.xcframework; path = xcfs/.build/artifacts/xcfs/xxd/xxd.xcframework; sourceTree = SOURCE_ROOT; };
 		BDE84C772BB33AD700457391 /* vim.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = vim.xcframework; path = xcfs/.build/artifacts/xcfs/vim/vim.xcframework; sourceTree = SOURCE_ROOT; };
 		BDEEE36B2B8951D3003003FD /* get_frameworks.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = get_frameworks.sh; sourceTree = "<group>"; };
+		BDF2B8D62BC481F000B9C7EA /* curl_ios.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = curl_ios.xcframework; path = xcfs/.build/artifacts/xcfs/curl_ios/curl_ios.xcframework; sourceTree = SOURCE_ROOT; };
 		C94437551D8311960096F84E /* BKResource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BKResource.h; sourceTree = "<group>"; };
 		C94437561D8311960096F84E /* BKResource.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BKResource.m; sourceTree = "<group>"; };
 		C944375F1D831CD30096F84E /* Themes */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Themes; sourceTree = "<group>"; };
@@ -1026,7 +1024,6 @@
 		D23EA944260379EB00BCF1FF /* KeyListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyListView.swift; sourceTree = "<group>"; };
 		D23EA9582604CB4B00BCF1FF /* FixedTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixedTextField.swift; sourceTree = "<group>"; };
 		D23FFC69261C2D46003E9227 /* template_setup.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = template_setup.xcconfig; sourceTree = "<group>"; };
-		D240806020BC8DF800F30099 /* tool_main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tool_main.c; path = Frameworks/ios_system/curl/curl/src/tool_main.c; sourceTree = SOURCE_ROOT; };
 		D241CBBE23040732003D64A5 /* KBKeyViewFlexible.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KBKeyViewFlexible.swift; sourceTree = "<group>"; };
 		D241CBBF23040732003D64A5 /* KBKeyViewArrows.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KBKeyViewArrows.swift; sourceTree = "<group>"; };
 		D241CBC023040733003D64A5 /* KBDevice.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KBDevice.swift; sourceTree = "<group>"; };
@@ -1170,7 +1167,6 @@
 		D2DE0DCD260323F400A69B6F /* id_ed25519-passphrase */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "id_ed25519-passphrase"; sourceTree = "<group>"; };
 		D2DE0DCE260323F400A69B6F /* id_ed25519-passphrase.pub */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "id_ed25519-passphrase.pub"; sourceTree = "<group>"; };
 		D2DE0DDD260331F300A69B6F /* NewKeyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewKeyView.swift; sourceTree = "<group>"; };
-		D2E4F92920B2BB4500B30F7B /* curl_ios_static.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = curl_ios_static.xcodeproj; path = ios_system/curl_ios_static.xcodeproj; sourceTree = "<group>"; };
 		D2E5454427C4C83C002635A2 /* FeedbackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackView.swift; sourceTree = "<group>"; };
 		D2E5454927C4D422002635A2 /* SupportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportView.swift; sourceTree = "<group>"; };
 		D2E66D132695B100007D42AA /* HostListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostListView.swift; sourceTree = "<group>"; };
@@ -1341,7 +1337,6 @@
 				07FABBC425C9AECF00E1CC2C /* BlinkFiles.framework in Frameworks */,
 				BD7AFC4128E8E98C004BCDA4 /* Base32Kit in Frameworks */,
 				0732F1291D06324200AB5438 /* libcurses.tbd in Frameworks */,
-				D2F64CA925CAA92700F2225D /* curl_ios_static.framework in Frameworks */,
 				0732F1271D06323A00AB5438 /* libz.tbd in Frameworks */,
 				BDE84C512BB233FB00457391 /* bc_ios.xcframework in Frameworks */,
 				D297F00F29012FDB002A24F9 /* CachedAsyncImage in Frameworks */,
@@ -1454,6 +1449,7 @@
 		0732F04F1D062BB300AB5438 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				BDF2B8D62BC481F000B9C7EA /* curl_ios.xcframework */,
 				BDE84C772BB33AD700457391 /* vim.xcframework */,
 				BDE84C762BB33AB800457391 /* xxd.xcframework */,
 				BDE84C502BB233F100457391 /* bc_ios.xcframework */,
@@ -1475,7 +1471,6 @@
 				D2334ECD25C1C04700385378 /* tar.xcframework */,
 				D2334EC725C1C04700385378 /* text.xcframework */,
 				D28DB3AB210B110B008A1139 /* libcompression.tbd */,
-				D2E4F92920B2BB4500B30F7B /* curl_ios_static.xcodeproj */,
 				B700AED71DD0F2C200100EBF /* CloudKit.framework */,
 				0732F1281D06324200AB5438 /* libcurses.tbd */,
 				0732F1261D06323A00AB5438 /* libz.tbd */,
@@ -2264,14 +2259,6 @@
 			path = General;
 			sourceTree = "<group>";
 		};
-		D2E4F92A20B2BB4500B30F7B /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				D2E4F92E20B2BB4500B30F7B /* curl_ios_static.framework */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 		D2E670112A2DB83200DEC4ED /* AppFont */ = {
 			isa = PBXGroup;
 			children = (
@@ -2287,7 +2274,6 @@
 				BD33F77F2AAA426D00CD16EE /* mosh */,
 				07FAB8E925C8E6C500E1CC2C /* ssh */,
 				D2334D1221495DAE00D26AC3 /* udptunnel */,
-				D240806020BC8DF800F30099 /* tool_main.c */,
 				D2F330D320A6F1DF0074ADD7 /* clear.m */,
 				D2F330CB20A6D98C0074ADD7 /* config.m */,
 				D264D2B528F84724002B1B14 /* whatsnew.m */,
@@ -2855,10 +2841,6 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
-					ProductGroup = D2E4F92A20B2BB4500B30F7B /* Products */;
-					ProjectRef = D2E4F92920B2BB4500B30F7B /* curl_ios_static.xcodeproj */;
-				},
-				{
 					ProductGroup = 0732F1061D062BF700AB5438 /* Products */;
 					ProjectRef = 0732F1051D062BF700AB5438 /* MBProgressHUD.xcodeproj */;
 				},
@@ -2904,13 +2886,6 @@
 			fileType = wrapper.framework;
 			path = MBProgressHUD.framework;
 			remoteRef = D2A3F4DC206909A8006BB305 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		D2E4F92E20B2BB4500B30F7B /* curl_ios_static.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = curl_ios_static.framework;
-			remoteRef = D2E4F92D20B2BB4500B30F7B /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -3299,7 +3274,6 @@
 				07F670731D05EEE200C0A53C /* MoshSession.m in Sources */,
 				07F670721D05EEE200C0A53C /* MCPSession.m in Sources */,
 				D23742CA21106ADF00366359 /* bench.m in Sources */,
-				D240806120BC8DF800F30099 /* tool_main.c in Sources */,
 				D210769B2A69234500B3D77E /* SnippetsConfigView.swift in Sources */,
 				D22277FD2A26204900D4C708 /* SearchMode.swift in Sources */,
 				B7D6A6291E2D43A800EDF7B0 /* BKSmartKeysConfigViewController.m in Sources */,
