@@ -9,8 +9,8 @@ var binaryTargets: [PackageDescription.Target] = [
   ),
   (
     "mosh",
-    "cd92212248429478a0f24346ca48397191409be0c8692b067a13eb9b17e50f27",
-    "https://github.com/blinksh/mosh-apple/releases/download/v1.4.0/mosh.xcframework.zip"
+    "e66c01f593116fd787cf289387cf7a1613eabf2bd2a95e0e610a5309a2a7f523",
+    "https://github.com/blinksh/mosh-apple/releases/download/v1.4.0+blink-17.3.0/mosh.xcframework.zip"
   ),
   (
     "LibSSH",
