@@ -139,7 +139,8 @@ class KBObserver: NSObject, UIInteraction {
 }
 
 class KBTracker: NSObject {
-  private(set) var hideSmartKeysWithHKB = !BKUserConfigurationManager.userSettingsValue(forKey: BKUserConfigShowSmartKeysWithXKeyBoard)
+  private(set) var hideSmartKeysWithHKB = true
+  //private(set) var hideSmartKeysWithHKB = !BKUserConfigurationManager.userSettingsValue(forKey: BKUserConfigShowSmartKeysWithXKeyBoard)
   
   @objc static let shared = KBTracker()
   
@@ -229,7 +230,8 @@ class KBTracker: NSObject {
   }
   
   @objc private func _updateSettings() {
-    hideSmartKeysWithHKB = !BKUserConfigurationManager.userSettingsValue(forKey: BKUserConfigShowSmartKeysWithXKeyBoard)
+    hideSmartKeysWithHKB = true
+    //hideSmartKeysWithHKB = !BKUserConfigurationManager.userSettingsValue(forKey: BKUserConfigShowSmartKeysWithXKeyBoard)
   
     input?.sync(traits: kbTraits, device: kbDevice, hideSmartKeysWithHKB: hideSmartKeysWithHKB)
   }
