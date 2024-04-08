@@ -114,7 +114,11 @@ extension WebAuthnKey: Signer {
           self.log?.message("WebAuthn Controller called to perform request.", .debug)
           return self.signaturePub!
         }
+        .handleEvents(receiveCancel: {
+          self.log?.message("WebAuthn signature publisher cancelled", .debug)
+        })
         .sink(receiveCompletion: { completion in
+          self.log?.message("WebAuthn received signature publisher completed with \(completion)", .debug)
         switch completion {
         case .failure(let err):
           error = err
@@ -122,7 +126,10 @@ extension WebAuthnKey: Signer {
           break
         }
         semaphore.signal()
-      }, receiveValue: { signature = $0 })
+        }, receiveValue: { sig in
+          self.log?.message("WebAuthn signature received.", .debug)
+          signature = sig
+        })
 
       self.log?.message("WebAuthn Controller awaiting response.", .debug)
       semaphore.wait()
@@ -151,7 +158,9 @@ extension WebAuthnKey: ASAuthorizationControllerDelegate, ASAuthorizationControl
       let credentialAssertion = authorization.credential as? ASAuthorizationPublicKeyCredentialAssertion,
       let rawSignature = credentialAssertion.signature
     else {
-      return signaturePub.send(completion: .failure(WebAuthnError.signatureError("Unexpected operation")))
+      self.log?.message("WebAuthn Controller unexpected operation received.", .warn)
+      signaturePub.send(completion: .failure(WebAuthnError.signatureError("Unexpected operation")))
+      return
     }
 
     let rawClientData = credentialAssertion.rawClientDataJSON
@@ -164,6 +173,7 @@ extension WebAuthnKey: ASAuthorizationControllerDelegate, ASAuthorizationControl
     
     // TODO We should validate the CredentialID, to be sure we signed with the proper key,
     // before we fail or ask the user to retry.
+    self.log?.message("WebAuthn Controller sending signature", .debug)
     signaturePub.send(webAuthnSig)
     signaturePub.send(completion: .finished)
   }
