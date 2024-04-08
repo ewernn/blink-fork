@@ -197,6 +197,8 @@
 		BDF2B8D32BC480CC00B9C7EA /* vim.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BDE84C772BB33AD700457391 /* vim.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		BDF2B8D52BC480D100B9C7EA /* xxd.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BDE84C762BB33AB800457391 /* xxd.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		BDF2B8D82BC4820F00B9C7EA /* curl_ios.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BDF2B8D62BC481F000B9C7EA /* curl_ios.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		BDF2B8DD2BC48D2800B9C7EA /* LibSSH.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D2334EC425C1C04700385378 /* LibSSH.xcframework */; };
+		BDF2B8DF2BC48D2D00B9C7EA /* libssh2.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D2F64C9525CA99AD00F2225D /* libssh2.xcframework */; };
 		BDF471BA268CD17B00A7A41B /* SSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 07FABB8425C9AEC000E1CC2C /* SSH.framework */; };
 		C94437571D8311960096F84E /* BKResource.m in Sources */ = {isa = PBXBuildFile; fileRef = C94437561D8311960096F84E /* BKResource.m */; };
 		C94437601D831CD30096F84E /* Themes in Resources */ = {isa = PBXBuildFile; fileRef = C944375F1D831CD30096F84E /* Themes */; };
@@ -227,7 +229,6 @@
 		D218069C25CC27C100B98902 /* AppKitBridge.bundle in Embed PlugIns */ = {isa = PBXBuildFile; fileRef = D218068725CC277900B98902 /* AppKitBridge.bundle */; platformFilter = maccatalyst; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D218072725CD499C00B98902 /* LibSSH.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D2334EC425C1C04700385378 /* LibSSH.xcframework */; };
 		D218073825CD4AF400B98902 /* openssl.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D2F64C9425CA99AD00F2225D /* openssl.xcframework */; };
-		D218076325CD4FDC00B98902 /* LibSSH.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D2334EC425C1C04700385378 /* LibSSH.xcframework */; };
 		D21A3FD721943BE200269705 /* dark-settings-ipad-29pt.png in Resources */ = {isa = PBXBuildFile; fileRef = D21A3FC621943BE200269705 /* dark-settings-ipad-29pt.png */; };
 		D21A3FD821943BE200269705 /* dark-notification-ipad-20pt.png in Resources */ = {isa = PBXBuildFile; fileRef = D21A3FC721943BE200269705 /* dark-notification-ipad-20pt.png */; };
 		D21A3FD921943BE200269705 /* dark-settings-iphone-29pt@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = D21A3FC821943BE200269705 /* dark-settings-iphone-29pt@3x.png */; };
@@ -288,8 +289,6 @@
 		D2334EFB25C1C28F00385378 /* network_ios.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = D2334EC625C1C04700385378 /* network_ios.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D2334F0025C1C28F00385378 /* shell.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D2334EC925C1C04700385378 /* shell.xcframework */; };
 		D2334F0125C1C28F00385378 /* shell.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = D2334EC925C1C04700385378 /* shell.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		D2334F0225C1C28F00385378 /* ssh_cmd.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D2334EC825C1C04700385378 /* ssh_cmd.xcframework */; };
-		D2334F0325C1C28F00385378 /* ssh_cmd.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = D2334EC825C1C04700385378 /* ssh_cmd.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D2334F0425C1C28F00385378 /* tar.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D2334ECD25C1C04700385378 /* tar.xcframework */; };
 		D2334F0525C1C28F00385378 /* tar.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = D2334ECD25C1C04700385378 /* tar.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D2334F0625C1C28F00385378 /* text.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D2334EC725C1C04700385378 /* text.xcframework */; };
@@ -464,8 +463,6 @@
 		D2F330D420A6F1DF0074ADD7 /* clear.m in Sources */ = {isa = PBXBuildFile; fileRef = D2F330D320A6F1DF0074ADD7 /* clear.m */; };
 		D2F330D620A6F4F50074ADD7 /* history.m in Sources */ = {isa = PBXBuildFile; fileRef = D2F330D520A6F4F50074ADD7 /* history.m */; };
 		D2F330DA20A7127B0074ADD7 /* open.m in Sources */ = {isa = PBXBuildFile; fileRef = D2F330D920A7127B0074ADD7 /* open.m */; };
-		D2F64CAF25CAAA3300F2225D /* libssh2.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D2F64C9525CA99AD00F2225D /* libssh2.xcframework */; };
-		D2F64CB125CAAAD100F2225D /* ssh_cmd.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D2334EC825C1C04700385378 /* ssh_cmd.xcframework */; };
 		D2FBEC0B27CF505D00FD974A /* browse.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2FBEC0727CF505D00FD974A /* browse.swift */; };
 		D2FCB4DD2339F9DB00A88108 /* UIScrollView+Paging.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2FCB4DC2339F9DB00A88108 /* UIScrollView+Paging.swift */; };
 /* End PBXBuildFile section */
@@ -697,7 +694,6 @@
 				D2334EF525C1C28F00385378 /* ios_system.xcframework in Embed Frameworks */,
 				D2334F0525C1C28F00385378 /* tar.xcframework in Embed Frameworks */,
 				D22277E22A26115300D4C708 /* BlinkSnippets.framework in Embed Frameworks */,
-				D2334F0325C1C28F00385378 /* ssh_cmd.xcframework in Embed Frameworks */,
 				D2334EEF25C1C28F00385378 /* awk.xcframework in Embed Frameworks */,
 				D2A0C2172600D16300F0DF97 /* Protobuf_C_.xcframework in Embed Frameworks */,
 				D2334EF325C1C28F00385378 /* files.xcframework in Embed Frameworks */,
@@ -1006,7 +1002,6 @@
 		D2334EC525C1C04700385378 /* mosh.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = mosh.xcframework; path = xcfs/.build/artifacts/xcfs/mosh/mosh.xcframework; sourceTree = SOURCE_ROOT; };
 		D2334EC625C1C04700385378 /* network_ios.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = network_ios.xcframework; path = xcfs/.build/artifacts/xcfs/network_ios/network_ios.xcframework; sourceTree = SOURCE_ROOT; };
 		D2334EC725C1C04700385378 /* text.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = text.xcframework; path = xcfs/.build/artifacts/xcfs/text/text.xcframework; sourceTree = SOURCE_ROOT; };
-		D2334EC825C1C04700385378 /* ssh_cmd.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = ssh_cmd.xcframework; path = xcfs/.build/artifacts/xcfs/ssh_cmd/ssh_cmd.xcframework; sourceTree = SOURCE_ROOT; };
 		D2334EC925C1C04700385378 /* shell.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = shell.xcframework; path = xcfs/.build/artifacts/xcfs/shell/shell.xcframework; sourceTree = SOURCE_ROOT; };
 		D2334ECA25C1C04700385378 /* files.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = files.xcframework; path = xcfs/.build/artifacts/xcfs/files/files.xcframework; sourceTree = SOURCE_ROOT; };
 		D2334ECB25C1C04700385378 /* Protobuf_C_.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Protobuf_C_.xcframework; path = xcfs/.build/artifacts/xcfs/Protobuf_C_/Protobuf_C_.xcframework; sourceTree = SOURCE_ROOT; };
@@ -1319,19 +1314,17 @@
 			files = (
 				D222780A2A26216900D4C708 /* TreeSitterBashQueries in Frameworks */,
 				D28DB3AC210B110C008A1139 /* libcompression.tbd in Frameworks */,
-				D2334F0225C1C28F00385378 /* ssh_cmd.xcframework in Frameworks */,
+				BDF2B8DF2BC48D2D00B9C7EA /* libssh2.xcframework in Frameworks */,
 				D2334F0625C1C28F00385378 /* text.xcframework in Frameworks */,
 				07FABB9925C9AEC100E1CC2C /* SSH.framework in Frameworks */,
 				D222780F2A26217A00D4C708 /* Runestone in Frameworks */,
 				D2334EEE25C1C28F00385378 /* awk.xcframework in Frameworks */,
 				BDCB7165268E1577007D7047 /* BlinkConfig.framework in Frameworks */,
 				D2334EF825C1C28F00385378 /* mosh.xcframework in Frameworks */,
-				D218076325CD4FDC00B98902 /* LibSSH.xcframework in Frameworks */,
 				D2334F0025C1C28F00385378 /* shell.xcframework in Frameworks */,
 				D2A0C2162600D16300F0DF97 /* Protobuf_C_.xcframework in Frameworks */,
 				D2334F0C25C1C3C600385378 /* OpenSSH.xcframework in Frameworks */,
 				D2C7710726EA49AA001B5659 /* openssl.xcframework in Frameworks */,
-				D2F64CAF25CAAA3300F2225D /* libssh2.xcframework in Frameworks */,
 				D222780C2A26216900D4C708 /* TreeSitterBashRunestone in Frameworks */,
 				D2334EF425C1C28F00385378 /* ios_system.xcframework in Frameworks */,
 				07FABBC425C9AECF00E1CC2C /* BlinkFiles.framework in Frameworks */,
@@ -1341,8 +1334,8 @@
 				BDE84C512BB233FB00457391 /* bc_ios.xcframework in Frameworks */,
 				D297F00F29012FDB002A24F9 /* CachedAsyncImage in Frameworks */,
 				D22278082A26216900D4C708 /* TreeSitterBash in Frameworks */,
-				D2F64CB125CAAAD100F2225D /* ssh_cmd.xcframework in Frameworks */,
 				07FAB90F25C8E94E00E1CC2C /* ArgumentParser in Frameworks */,
+				BDF2B8DD2BC48D2800B9C7EA /* LibSSH.xcframework in Frameworks */,
 				D2334EFA25C1C28F00385378 /* network_ios.xcframework in Frameworks */,
 				D2A6398928CFA0B90066FD18 /* SwiftCBOR in Frameworks */,
 				D24AFD58222410E700CFD3C1 /* MBProgressHUD.framework in Frameworks */,
@@ -1467,7 +1460,6 @@
 				D2334EC925C1C04700385378 /* shell.xcframework */,
 				D2F64C9525CA99AD00F2225D /* libssh2.xcframework */,
 				D2F64C9425CA99AD00F2225D /* openssl.xcframework */,
-				D2334EC825C1C04700385378 /* ssh_cmd.xcframework */,
 				D2334ECD25C1C04700385378 /* tar.xcframework */,
 				D2334EC725C1C04700385378 /* text.xcframework */,
 				D28DB3AB210B110B008A1139 /* libcompression.tbd */,
@@ -4887,7 +4879,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 869;
+				CURRENT_PROJECT_VERSION = 928;
 				DEAD_CODE_STRIPPING = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEFINES_MODULE = YES;
@@ -4909,7 +4901,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/Frameworks",
 				);
-				MARKETING_VERSION = 17.3.0;
+				MARKETING_VERSION = 17.99.9;
 				NEW_SETTING = "";
 				OTHER_CFLAGS = "$(BLINK_OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
@@ -4939,7 +4931,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 869;
+				CURRENT_PROJECT_VERSION = 928;
 				DEAD_CODE_STRIPPING = NO;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = A2H2CL32AG;
@@ -4956,7 +4948,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/Frameworks",
 				);
-				MARKETING_VERSION = 17.3.0;
+				MARKETING_VERSION = 17.99.9;
 				NEW_SETTING = "";
 				OTHER_CFLAGS = "$(BLINK_OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (

@@ -9,7 +9,7 @@ var binaryTargets: [PackageDescription.Target] = [
   ),
   (
     "mosh",
-    "e66c01f593116fd787cf289387cf7a1613eabf2bd2a95e0e610a5309a2a7f523",
+    "acf9a5aebfb5b05da243d5ec914e22d1022c4edf777aceb7e0a9eb46756cd3fa",
     "https://github.com/blinksh/mosh-apple/releases/download/v1.4.0+blink-17.3.0/mosh.xcframework.zip"
   ),
   (
@@ -71,6 +71,11 @@ var binaryTargets: [PackageDescription.Target] = [
     "network_ios",
     "9fe5f119b2d5568d2255e2540f36e76525bfbeaeda58f32f02592ca8d74f4178",
     "https://github.com/holzschu/network_ios/releases/download/v0.3/network_ios.xcframework.zip"
+  ),
+  (
+    "curl_ios",
+    "59b437111a5e47039fc900ce207ca0a4b3a7d411cebb576beae3f0631a05922e",
+    "https://github.com/holzschu/ios_system/releases/download/v3.0.3/curl_ios.xcframework.zip"
   ),
   (
     "bc",
