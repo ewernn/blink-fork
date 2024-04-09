@@ -50,6 +50,7 @@ public class WebAuthnKey: NSObject {
   var log: SSHLogger? = nil
   //var authAnchor: ASPresentationAnchor? = nil
   var signaturePub: PassthroughSubject<Data, Error>!
+  var cancelSignature: AnyCancellable!
 
   public var comment: String? = nil
   
@@ -107,7 +108,7 @@ extension WebAuthnKey: Signer {
       var error: Error? = nil
       self.signaturePub = PassthroughSubject<Data, Error>()
       // Controller needs to be displayed on main.
-      let cancel = Just(authController)
+      self.cancelSignature = Just(authController)
         .receive(on: DispatchQueue.main)
         .flatMap { authController in
           authController.performRequests() // options: .preferImmediatelyAvailableCredentials may suppress the UI, and it doesn't make sense in our scenario
