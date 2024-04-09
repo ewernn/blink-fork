@@ -178,8 +178,13 @@
     
     return NO;
   }
+  
+  // NOTE We don't have a passthrough for all of it.
+  // This should be done at a different function
   setenv("LC_ALL", "UTF-8", 1);
+  setenv("LC_CTYPE", "UTF-8", 1);
   setlocale(LC_ALL, "UTF-8");
+  setlocale(LC_CTYPE, "UTF-8");
   
   if ([cmd isEqualToString:@"mosh"]) {
     [self _runMoshWithArgs:cmdline];
@@ -226,7 +231,9 @@
     _sshClients = [[NSMutableArray alloc] init];
 
     setenv("LC_ALL", "UTF-8", 1);
+    setenv("LC_CTYPE", "UTF-8", 1);
     setlocale(LC_ALL, "UTF-8");
+    setlocale(LC_CTYPE, "UTF-8");
   }
   
   [_device prompt:@"blink> " secure:NO shell:YES];
