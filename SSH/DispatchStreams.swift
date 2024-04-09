@@ -50,8 +50,10 @@ public enum DispatchStreamError: Error {
 public class DispatchOutputStream: Writer {
   let stream: DispatchIO
   let queue: DispatchQueue
+  var fd: Int32?
   
   public init(stream: Int32) {
+    self.fd = stream
     self.queue = DispatchQueue(label: "file-\(stream)")
     self.stream = DispatchIO(type: .stream, fileDescriptor: stream, queue: self.queue, cleanupHandler: { error in
       print("Dispatch closed with \(error)")
@@ -82,15 +84,26 @@ public class DispatchOutputStream: Writer {
   }
   
   public func close() {
-    stream.close(flags: .stop)
+    if self.fd != nil {
+      stream.close(flags: .stop)
+      self.fd = nil
+    }
+  }
+  
+  deinit {
+    if self.fd != nil {
+      stream.close(flags: .stop)
+    }
   }
 }
 
 public class DispatchInputStream {
   let stream: DispatchIO
   let queue: DispatchQueue
+  var fd: Int32?
   
   public init(stream: Int32) {
+    self.fd = stream
     self.queue = DispatchQueue(label: "file-\(stream)")
     self.stream = DispatchIO(type: .stream, fileDescriptor: stream, queue: self.queue, cleanupHandler: { error in
       print("Dispatch \(error)")
@@ -99,7 +112,16 @@ public class DispatchInputStream {
   }
   
   public func close() {
-    stream.close(flags: .stop)
+    if self.fd != nil {
+      stream.close(flags: .stop)
+      self.fd = nil
+    }
+  }
+  
+  deinit {
+    if self.fd != nil {
+      stream.close(flags: .stop)
+    }
   }
 }
 
