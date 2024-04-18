@@ -186,6 +186,11 @@ public func blink_ssh_main(argc: Int32, argv: Argv) -> Int32 {
         print(banner, to: &self.stdout)
       }
       
+      conn.handleSessionException = { error in
+        print("Exception received \(error)", to: &self.stderr)
+        self.kill()
+      }
+      
       if cmd.startsSession {
         if let addr = conn.clientAddressIP() {
           print("Connected to \(addr)", to: &self.stdout)

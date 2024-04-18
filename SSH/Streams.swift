@@ -209,6 +209,7 @@ public class Stream : Reader, Writer, WriterTo {
   
   public func cancel() {
     self.log.message("Stream Cancelled", SSH_LOG_INFO)
+    // Make it nil so everything associated with the flow is also disposed (self-retentions).
     stdoutCancellable = nil
     stdinCancellable = nil
     stderrCancellable = nil

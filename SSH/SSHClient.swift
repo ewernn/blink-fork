@@ -882,6 +882,8 @@ public class SSHClient {
     print("SSH Session deinit")
     self.log.message("SSH Session deinit", SSH_LOG_INFO)
     // NOTE Disconnecting the socket from the RunLoop won't free it (?), so we still need to stop it.
+    // Theory here was that once the socket is disconnected from the RunLoop, there is nothing else in the RunLoop so it would
+    // automatically wake. But it needs the extra nagging.
     // ssh_disconnect(session)
     ssh_free(session)
     CFRunLoopStop(self.rloop.getCFRunLoop())

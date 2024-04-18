@@ -89,6 +89,9 @@ class SSHPool {
           })
 
       SSH.SSHClient.run()
+      if let ctrl = SSHPool.shared.control(for: host, with: config) {
+        SSHPool.shared.removeControl(ctrl)
+      }
       print("Pool Thread out")
     }
 

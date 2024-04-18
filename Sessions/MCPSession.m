@@ -377,6 +377,9 @@
           [client kill];
         }
       });
+    } else {
+      // Send kill signal to child session.
+      [_childSession kill];
     }
     return;
   } else if (_currentCmd) {
