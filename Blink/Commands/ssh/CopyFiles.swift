@@ -56,6 +56,7 @@ public func copyfiles_main(argc: Int32, argv: Argv) -> Int32 {
 
 struct BlinkCopyCommand: ParsableCommand {
   static var configuration = CommandConfiguration(
+    commandName: "fcp",
     // Optional abstracts and discussions are used for help output.
     abstract: "Copy SOURCE to DEST or multiple SOURCEs to a DEST directory.",
     discussion: """

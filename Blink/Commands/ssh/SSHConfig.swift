@@ -39,6 +39,7 @@ fileprivate let Version = "1.0.0"
 struct SSHCommand: ParsableCommand {
   static var configuration = CommandConfiguration(
     // Optional abstracts and discussions are used for help output.
+    commandName: "ssh",
     abstract: "A LibSSH SSH client (remote login program)",
     discussion: """
     ssh (SSH client) is a program for logging into a remote machine and for executing commands on a remote machine. It is intended to replace rlogin and rsh, and provide secure encrypted communications between two untrusted hosts over an insecure network.

@@ -39,6 +39,7 @@ import ios_system
 
 struct BlinkSSHAgentAddCommand: ParsableCommand {
   static var configuration = CommandConfiguration(
+    commandName: "ssh-agent",
     abstract: "Blink Agent Control",
     discussion: """
     """,

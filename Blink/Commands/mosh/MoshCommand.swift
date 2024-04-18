@@ -36,6 +36,7 @@ fileprivate let Version = "1.4.0"
 
 struct MoshCommand: ParsableCommand {
   static var configuration = CommandConfiguration(
+    commandName: "mosh",
     abstract: "",
     discussion: """
       """,
