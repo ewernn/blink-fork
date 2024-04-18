@@ -113,7 +113,9 @@
         [_device prompt:@"blink> " secure:NO shell:YES];
       }
     #else
-    [_device prompt:@"blink> " secure:NO shell:YES];
+    if (_device) {
+      [_device prompt:@"blink> " secure:NO shell:YES];
+    }
     #endif
   });
 }
@@ -236,7 +238,12 @@
     setlocale(LC_CTYPE, "UTF-8");
   }
   
-  [_device prompt:@"blink> " secure:NO shell:YES];
+  if (_device) {
+    // TODO At the moment this is just a prompt instead of a readline. This needs to be fixed.
+    // And bc of that, we need to check that there is a device. The MCP may be killed, but the loop here may still
+    // try to write to the device.
+    [_device prompt:@"blink> " secure:NO shell:YES];
+  }
   
   return YES;
 }
@@ -357,6 +364,7 @@
   ios_closeSession(_sessionUUID.UTF8String);
   
   [_device close];
+  _device = NULL;
 }
 
 - (void)suspend
