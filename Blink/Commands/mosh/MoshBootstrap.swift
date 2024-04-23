@@ -47,9 +47,9 @@ let MoshServerDownloadPathURL = URL(string: "https://github.com/blinksh/mosh-sta
 fileprivate enum Checksum {
   static let DarwinArm64 = "3cdc2cf180bda497264049f43cb97557f6827795e7e612ad69ac02ea0096cbc4"
   static let DarwinX86_64 = "bf42e75ab1ad3beca899da18a3f154e0e6c9c4ef5507a2e5fbc945d404ce1168"
-  static let LinuxAmd64 = "b91598a54627736bc7bedb06edbe0b5da5dcbb6838850fcb4f93a7d8ac88897c"
-  static let LinuxArm64 = "70781d8a41f56000491ac646c550b0a58b743081e6a1597afc0a38441a4320ff"
-  static let LinuxArmv7 = "3491d30e35cb4a0d777d50b24fb898f0a1f6f52389fefac246c1154f095de485"
+  static let LinuxAmd64 = "49e71e059e480d96b5f5b9fb15485a79c2717008fb9d9c967c85edfe2103e300"
+  static let LinuxArm64 = "fc8a6257f61a7d65d15206301fb010097e58521afa9ee12852e1e89ade0b8efc"
+  static let LinuxArmv7 = "23d440e99cfd736074b7cb12540e2b902824ac2d296a82166985d30c5f59ca13"
   static func validate(data: Data, platform: Platform, architecture: Architecture) -> Bool {
     let hash = SHA256.hash(data: data)
     let hexHash = hash.map { byte in  String(format: "%02x", byte)}.joined()
