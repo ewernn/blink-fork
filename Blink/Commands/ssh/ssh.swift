@@ -243,7 +243,14 @@ public func blink_ssh_main(argc: Int32, argv: Argv) -> Int32 {
     awaitRunLoop()
 
     stream?.cancel()
-
+    outStream?.close()
+    inStream?.close()
+    errStream?.close()
+    stream = nil
+    outStream = nil
+    inStream = nil
+    errStream = nil
+    
     if let conn = self.connection, cmd.blocks {
       if cmd.startsSession { SSHPool.deregister(shellOn: conn) }
       forwardTunnels.forEach { SSHPool.deregister(localForward:  $0, on: conn) }

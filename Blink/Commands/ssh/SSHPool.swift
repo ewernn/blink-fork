@@ -88,6 +88,9 @@ class SSHPool {
             pb.send(conn)
           })
 
+      // NOTE Before we let the Pool control the RunLoop, and the problem is that SSHClient needs to be in full control
+      // of the RunLoop as it may have multiple nested runs internally. When run this way, the SSHClient will continue until
+      // fully disposed.
       SSH.SSHClient.run()
       if let ctrl = SSHPool.shared.control(for: host, with: config) {
         SSHPool.shared.removeControl(ctrl)
