@@ -116,6 +116,10 @@ enum KBDevice {
     // | 18 | iPad Pro 11" 3d-gen  | 1194 |      | 1389 | tab |
     // | 18 | iPad Pro 11" 4d-gen  | 1194 |      | 1389 | tab |
     // | 19 | iPad Pro 12" 6th-gen | 1366 | 1024 | 1590 | tab |
+    // | 20 | iPad Air 11" M2      | 1180 |      | 1373 | tab |
+    // | 21 | iPad Air 13" M2      | 1366 | 1024 | 1590 | tab |
+    // | 22 | iPad Pro 11" M4      | 1210 |      | 1408 | tab |
+    // | 23 | iPad Pro 13" M4      | 1376 | 1032 | 1600 | tab |
     // +----+----------------------+------+------+------+-----+
   
     switch wideSideSize {
@@ -129,7 +133,7 @@ enum KBDevice {
     case 896:  return .in6_5 // iPhone 11 Pro Max
     case 926:  return .in6_7 // iPhone 12 Pro Max, iPhone 14 Plus
     case 932:  return .in6_7 // iPhone 14 Pro Max
-    case 1024:
+    case 1024, 1032:
       // tune for ipad 12 ZLT
       return DeviceInfo.shared().hasCorners ? .in12_9 : .in9_7 // iPad 12.9 ZLT
     case 1080: return .in10_2 // TODO: Tune for iPad 10th-gen
@@ -144,7 +148,10 @@ enum KBDevice {
     case 1389: return .in11_MoreSpace
     case 1366: return .in12_9
     case 1590: return .in12_9 // iPad 12.9 ZMS
-
+    case 1210: return .in11
+    case 1408: return .in11_MoreSpace
+    case 1376: return .in12_9
+    case 1600: return .in12_9
     default:
       // Safe fallback
       print("KBDevice: unknown device with size:", size)

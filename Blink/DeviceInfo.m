@@ -61,25 +61,28 @@
     NSString *marketingName = self.marketingName;
     
     _hasNotch = [marketingName hasPrefix:@"iPhone X"]
-             || [marketingName hasPrefix:@"iPhone 11"]
-             || [marketingName hasPrefix:@"iPhone 12"]
-             || [marketingName hasPrefix:@"iPhone 13"]
-             || [marketingName hasPrefix:@"iPhone 14"]
-             || [marketingName hasPrefix:@"iPhone 15"];
+      || [marketingName hasPrefix:@"iPhone 11"]
+      || [marketingName hasPrefix:@"iPhone 12"]
+      || [marketingName hasPrefix:@"iPhone 13"]
+      || [marketingName hasPrefix:@"iPhone 14"]
+      || [marketingName hasPrefix:@"iPhone 15"];
 
     _hasDynamicIsland = [marketingName hasPrefix:@"iPhone 14"]
-                     || [marketingName hasPrefix:@"iPhone 15"];
+      || [marketingName hasPrefix:@"iPhone 15"];
 
     _hasCorners = _hasNotch || [_machine hasPrefix:@"iPad8"]
-               || [_machine hasPrefix:@"iPad13"]
-               || [_machine hasPrefix:@"iPad14"]
-               || [marketingName hasPrefix:@"Mac"];
+      || [_machine hasPrefix:@"iPad13"]
+      //      || [_machine hasPrefix:@"iPad14"]
+      //      || [_machine hasPrefix:@"iPad16"]
+      || [marketingName hasPrefix:@"Mac"];
 
     _hasAppleSilicon = [marketingName hasPrefix:@"iPad Pro (11-inch) (3rd generation)"]
-                    || [marketingName hasPrefix:@"iPad Pro (11-inch) (4th generation)"]
-                    || [marketingName hasPrefix:@"iPad Pro (12.9-inch) (5th generation)"]
-                    || [marketingName hasPrefix:@"iPad Pro (12.9-inch) (6th generation)"]
-                    || [marketingName hasPrefix:@"iPad Air (5th generation)"];
+      || [marketingName hasPrefix:@"iPad Pro (11-inch) (4th generation)"]
+      || [marketingName hasPrefix:@"iPad Pro (12.9-inch) (5th generation)"]
+      || [marketingName hasPrefix:@"iPad Pro (12.9-inch) (6th generation)"]
+      || [marketingName hasPrefix:@"iPad Air (5th generation)"]
+      || [marketingName containsString:@"(M2)"]
+      || [marketingName containsString:@"(M4)"];
   }
   return self;
 }
@@ -274,6 +277,16 @@
     @"iPad14,4" : @"iPad Pro (11-inch) (4th generation)",
     @"iPad14,5" : @"iPad Pro (12.9-inch) (6th generation)",
     @"iPad14,6" : @"iPad Pro (12.9-inch) (6th generation)",
+
+    @"iPad14,8" : @"iPad Air (11-inch) (M2)", // wifi
+    @"iPad14,9" : @"iPad Air (11-inch) (M2)", // cellular
+    @"iPad14,10": @"iPad Air (13-inch) (M2)", // wifi
+    @"iPad14,11": @"iPad Air (13-inch) (M2)", // cellular
+
+    @"iPad16,3":  @"iPad Pro (11-inch) (M4)", // wifi
+    @"iPad16,4":  @"iPad Pro (11-inch) (M4)", // cellular
+    @"iPad16,5":  @"iPad Pro (13-inch) (M4)", // wifi
+    @"iPad16,6":  @"iPad Pro (13-inch) (M4)", // cellular
   };
   
   NSString *value = codes[_machine];
