@@ -87,7 +87,7 @@ class FileProviderExtension: NSFileProviderExtension {
   override func item(for identifier: NSFileProviderItemIdentifier) throws -> NSFileProviderItem {
     let log = BlinkLogger("itemFor")
     log.info("\(identifier)")
-    
+
     var queryableIdentifier: BlinkItemIdentifier!
 
     if identifier == .rootContainer {
@@ -189,7 +189,7 @@ class FileProviderExtension: NSFileProviderExtension {
       completionHandler(NSFileProviderError(.noSuchItem))
       return
     }
-    
+
     guard !blinkItemReference.isDownloaded else {
       log.info("\(blinkItemReference.path) - current item up to date")
       completionHandler(nil)
@@ -339,7 +339,7 @@ class FileProviderExtension: NSFileProviderExtension {
     // Called at some point after the file has changed; the provider may then trigger an upload
     let log = BlinkLogger("itemChanged")
     log.info("\(url.path)")
-    
+
     guard var blinkItemReference = self.cache.reference(url: url) else {
       log.error("Could not find reference to item")
       return
@@ -347,7 +347,7 @@ class FileProviderExtension: NSFileProviderExtension {
     // - if there are existing NSURLSessionTasks uploading this file, cancel them
     // Cancel an upload if there is a reference to it.
     blinkItemReference.uploadingTask?.cancel()
-    
+
     // - mark file at <url> as needing an update in the model
     // Update the model
     var attributes: FileAttributes!
@@ -374,7 +374,7 @@ class FileProviderExtension: NSFileProviderExtension {
     let itemIdentifier = blinkItemReference.itemIdentifier
     let destTranslator = self.cache.rootTranslator(for: BlinkItemIdentifier(itemIdentifier))
       .flatMap { $0.cloneWalkTo(BlinkItemIdentifier(blinkItemReference.parentItemIdentifier).path) }
-    
+
     // 3. Upload
     let c = destTranslator.flatMap { remotePathTranslator in
         return srcTranslator.flatMap{ localFileTranslator -> CopyProgressInfoPublisher in
@@ -387,7 +387,7 @@ class FileProviderExtension: NSFileProviderExtension {
         if case let .failure(error) = completion {
           log.error("Upload failed \(localFileURLPath)- \(error)")
           blinkItemReference.uploadCompleted(error)
-          
+
           self.signalEnumerator(for: blinkItemReference.parentItemIdentifier)
           return
         }
@@ -397,9 +397,9 @@ class FileProviderExtension: NSFileProviderExtension {
 
         log.info("Upload completed \(localFileURLPath)")
       } receiveValue: { _ in }
-    
+
     blinkItemReference.uploadStarted(c)
-    
+
     self.signalEnumerator(for: blinkItemReference.parentItemIdentifier)
   }
 
@@ -630,12 +630,12 @@ class FileProviderExtension: NSFileProviderExtension {
       let fpm = NSFileProviderManager(for: domain) else {
       return
     }
-    
+
     fpm.signalEnumerator(for: container, completionHandler: { error in
       BlinkLogger("signalEnumerator").info("Enumerator Signaled with \(error ?? "no error")")
     })
   }
-  
+
   deinit {
     print("OOOOUUUTTTTT!!!!!")
   }

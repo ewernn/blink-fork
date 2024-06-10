@@ -46,7 +46,7 @@ class TranslatorControl {
     self.translator = translator
     self.connectionControl = connectionControl
   }
-  
+
   deinit {
     self.connectionControl.cancel()
   }
@@ -66,6 +66,7 @@ final class FileTranslatorCache {
   private var translators: [String: TranslatorControl] = [:]
   private var references: [String: BlinkItemReference] = [:]
   private var fileList = [String: [BlinkItemReference]]()
+  private let queue = DispatchQueue(label: "FileTranslatorCache", attributes: .concurrent)
 
   init() {}
 
@@ -118,7 +119,9 @@ final class FileTranslatorCache {
             .tryMap { try SFTPTranslator(on: $0) }
             .flatMap { $0.walkTo(pathAtFiles) }
             .map { t -> Translator in
-              self.translators[encodedRootPath] = TranslatorControl(t, connectionControl: connControl)
+              self.queue.async(flags: .barrier) {
+                self.translators[encodedRootPath] = TranslatorControl(t, connectionControl: connControl)
+              }
               return t
             }
         }
@@ -133,24 +136,30 @@ final class FileTranslatorCache {
 
   func store(reference: BlinkItemReference) {
     print("storing File BlinkItemReference : \(reference.itemIdentifier.rawValue)")
-    self.references[reference.itemIdentifier.rawValue] = reference
-    if reference.itemIdentifier != .rootContainer {
-      if var list = self.fileList[reference.parentItemIdentifier.rawValue] {
-        list.append(reference)
-        self.fileList[reference.parentItemIdentifier.rawValue] = list
-      } else {
-        self.fileList[reference.parentItemIdentifier.rawValue] = [reference]
+    queue.async(flags: .barrier) {
+      self.references[reference.itemIdentifier.rawValue] = reference
+      if reference.itemIdentifier != .rootContainer {
+        if var list = self.fileList[reference.parentItemIdentifier.rawValue] {
+          list.append(reference)
+          self.fileList[reference.parentItemIdentifier.rawValue] = list
+        } else {
+          self.fileList[reference.parentItemIdentifier.rawValue] = [reference]
+        }
       }
     }
   }
-  
+
   func remove(reference: BlinkItemReference) {
-    self.references.removeValue(forKey: reference.itemIdentifier.rawValue)
+    queue.async(flags: .barrier) {
+      self.references.removeValue(forKey: reference.itemIdentifier.rawValue)
+    }
   }
 
   func reference(identifier: BlinkItemIdentifier) -> BlinkItemReference? {
     print("requesting File BlinkItemReference : \(identifier.itemIdentifier.rawValue)")
-    return self.references[identifier.itemIdentifier.rawValue]
+    return queue.sync {
+      self.references[identifier.itemIdentifier.rawValue]
+    }
   }
 
   func reference(url: URL) -> BlinkItemReference? {
@@ -168,32 +177,36 @@ final class FileTranslatorCache {
       cleanPath.removeFirst()
     }
 
-    return self.references[String(cleanPath)]
+    return queue.sync {
+      self.references[String(cleanPath)]
+    }
   }
-  
+
   func updatedItems(container: BlinkItemIdentifier, since anchor: UInt) -> [BlinkItemReference]? {
-    self.fileList[container.itemIdentifier.rawValue]?.filter {
-      anchor < $0.syncAnchor
+    queue.sync {
+      self.fileList[container.itemIdentifier.rawValue]?.filter {
+        anchor < $0.syncAnchor
+      }
     }
   }
 }
 
 
 class SSHClientConfigProvider {
-  
+
   static func config(host title: String) throws -> (String, SSHClientConfig) {
-   
+
     // NOTE This is just regular config initialization. Usually happens on AppDelegate, but the
     // FileProvider doesn't get another chance.
     BKHosts.loadHosts()
     BKPubKey.loadIDS()
-    
+
     let bkConfig = try BKConfig()
     let agent = SSHAgent()
     let consts: [SSHAgentConstraint] = [SSHConstraintTrustedConnectionOnly()]
 
     let host = try bkConfig.bkSSHHost(title)
-    
+
     if let signers = bkConfig.signer(forHost: host) {
       signers.forEach { (signer, name) in
         agent.loadKey(signer, aka: name, constraints: consts)
@@ -208,12 +221,12 @@ class SSHClientConfigProvider {
     if let password = host.password, !password.isEmpty {
       availableAuthMethods.append(AuthPassword(with: password))
     }
-    
+
     let log = BlinkLogger("SSH")
     let logger = PassthroughSubject<String, Never>()
     logger.sink {
       log.send($0)
-      
+
     }.store(in: &logCancellables)
 
 

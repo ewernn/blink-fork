@@ -55,7 +55,7 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
 
     let path = self.identifier.path
     self.cache = cache
-    
+
     self.log = BlinkLogger("enumeratorFor \(path)")
     self.log.debug("Initialized")
 
@@ -173,12 +173,12 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
 
     let anchor = UInt(String(data: anchor.rawValue, encoding: .utf8)!)!
     self.log.info("Enumerating changes at \(anchor) anchor")
-    
+
     guard let ref = self.cache.reference(identifier: self.identifier) else {
       observer.finishEnumeratingWithError("Op not supported")
       return
     }
-    
+
     if let updatedItems = self.cache.updatedItems(container: self.identifier, since: anchor) {
       // Atm only update changes, no deletion as we don't provide tombstone values.
       self.log.info("\(updatedItems.count) items updated.")
@@ -186,10 +186,10 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
     } else if anchor < ref.syncAnchor {
       observer.didUpdate([ref])
     }
-    
+
     let newAnchor = ref.syncAnchor
     let data = "\(newAnchor)".data(using: .utf8)
-    
+
     observer.finishEnumeratingChanges(upTo: NSFileProviderSyncAnchor(data!), moreComing: false)
   }
 
