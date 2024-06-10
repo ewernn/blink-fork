@@ -55,7 +55,7 @@ public class SSHAgentKey {
 //  var expiration: Int
   public let signer: Signer
   public let name: String
-  
+
   init(_ key: Signer, named: String, constraints: [SSHAgentConstraint]? = nil) {
     self.signer = key
     self.name = named
@@ -76,7 +76,7 @@ public class SSHAgent {
   private class AgentCtxt {
     weak var agent: SSHAgent?
     weak var client: SSHClient?
-    
+
     init(agent: SSHAgent, client: SSHClient) {
       self.agent = agent
       self.client = client
@@ -86,7 +86,7 @@ public class SSHAgent {
   public func linkTo(agent: SSHAgent) {
     self.superAgent = agent
   }
-  
+
   public func attachTo(client: SSHClient) {
     let agentCtxt = AgentCtxt(agent: self, client: client)
     contexts.append(agentCtxt)
@@ -118,7 +118,7 @@ public class SSHAgent {
 
       return Int32(replyData.count)
     }
-    
+
     ssh_set_agent_callback(client.session, cb, ctxt)
   }
 
@@ -133,7 +133,7 @@ public class SSHAgent {
     }
     ring.append(cKey)
   }
-  
+
   public func removeKey(_ name: String) -> Signer? {
     if let idx = ring.firstIndex(where: { $0.name == name }) {
       let key = ring.remove(at: idx)
@@ -141,6 +141,10 @@ public class SSHAgent {
     } else {
       return nil
     }
+  }
+
+  public func clear() {
+    ring = []
   }
 
   func request(_ message: Data, context: SSHAgentRequestType, client: SSHClient) throws -> Data {
@@ -151,7 +155,7 @@ public class SSHAgent {
           var respType = SSHAgentResponseType.answerIdentities.rawValue
           let preamble = Data(bytes: &respType, count: MemoryLayout<CChar>.size) +
             Data(bytes: &keys, count: MemoryLayout<UInt32>.size)
-          
+
           return ring.reduce(preamble) { $0 + $1 }
         case .requestSignature:
           guard let signature = try encodedSignature(message, for: client) else {
@@ -234,7 +238,7 @@ extension SSHAgent {
 
         let reply = SSHEncode.data(from: UInt32(replyData.count)) + replyData
         let dd = reply.withUnsafeBytes { DispatchData(bytes: $0) }
-        
+
         return stream.write(dd, max: dd.count)
       }.sink(
         receiveCompletion: { c in
@@ -281,12 +285,12 @@ public enum SSHEncode {
   public static func data(from str: String) -> Data {
     self.data(from: UInt32(str.count)) + (str.data(using: .utf8) ?? Data())
   }
-  
+
   public static func data(from int: UInt32) -> Data {
     var val: UInt32 = UInt32(int).bigEndian
     return Data(bytes: &val, count: MemoryLayout<UInt32>.size)
   }
-  
+
   public static func data(from bytes: Data) -> Data {
     self.data(from: UInt32(bytes.count)) + bytes
   }

@@ -35,7 +35,7 @@ import SwiftUI
 import LocalAuthentication
 
 struct SettingsView: View {
-  
+
   @EnvironmentObject private var _nav: Nav
   @State private var _biometryType = LAContext().biometryType
   @State private var _blinkVersion = UIApplication.blinkShortVersion() ?? ""
@@ -45,7 +45,7 @@ struct SettingsView: View {
   @State private var _defaultUser = BLKDefaults.defaultUserName() ?? ""
   @StateObject private var _entitlements: EntitlementsManager = .shared
   @StateObject private var _model = PurchasesUserModel.shared
-  
+
   var body: some View {
     List {
       if _entitlements.earlyAccessFeatures.active && _entitlements.earlyAccessFeatures.period == .Trial {
@@ -101,6 +101,11 @@ struct SettingsView: View {
         } details: {
           HostListView()
         }
+        Row {
+          Label("Default Agent", systemImage: "key.viewfinder")
+        } details: {
+          DefaultAgentSettingsView()
+        }
         RowWithStoryBoardId(content: {
           HStack {
             Label("Default User", systemImage: "person")
@@ -109,7 +114,7 @@ struct SettingsView: View {
           }
         }, storyBoardId: "BKDefaultUserViewController")
       }
-      
+
       Section("Terminal") {
         RowWithStoryBoardId(content: {
           Label("Appearance", systemImage: "paintpalette")
@@ -135,7 +140,7 @@ struct SettingsView: View {
         }
 #endif
       }
-      
+
       Section("Configuration") {
         if EntitlementsManager.shared.earlyAccessFeatures.active || FeatureFlags.earlyAccessFeatures {
           Row {
@@ -151,7 +156,7 @@ struct SettingsView: View {
             Text(_iCloudSyncOn ? "On" : "Off").foregroundColor(.secondary)
           }
         }, storyBoardId: "BKiCloudConfigurationViewController")
-        
+
         RowWithStoryBoardId(content: {
           HStack {
             Label("Auto Lock", systemImage: _biometryType == .faceID ? "faceid" : "touchid")
@@ -167,7 +172,7 @@ struct SettingsView: View {
           }
         }, storyBoardId: "BKXCallBackUrlConfigurationViewController")
       }
-      
+
       Section("Get in touch") {
         Row {
           Label("Support", systemImage: "book")
@@ -185,12 +190,12 @@ struct SettingsView: View {
         //   } label: {
         //     Label("Rate Blink", systemImage: "star")
         //   }
-          
+
         //   Spacer()
         //   Text("App Store").foregroundColor(.secondary)
         // }
       }
-      
+
       Section {
         RowWithStoryBoardId(content: {
           HStack {
@@ -220,10 +225,10 @@ struct SettingsView: View {
       _autoLockOn = BKUserConfigurationManager.userSettingsValue(forKey: BKUserConfigAutoLock)
       _xCallbackUrlOn = BLKDefaults.isXCallBackURLEnabled()
       _defaultUser = BLKDefaults.defaultUserName() ?? ""
-      
+
     }
     .listStyle(.grouped)
     .navigationTitle("Settings")
-    
+
   }
 }

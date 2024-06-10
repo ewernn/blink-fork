@@ -40,42 +40,43 @@ import ios_system
 struct BlinkSSHAgentAddCommand: ParsableCommand {
   static var configuration = CommandConfiguration(
     commandName: "ssh-agent",
-    abstract: "Blink Agent Control",
+    abstract: "Blink Default Agent Control",
     discussion: """
+      You can also configure the default agent from Settings > Agent.
     """,
     version: "1.0.0"
   )
-  
+
   @Flag(name: [.customShort("L")],
   help: "List keys stored on agent")
   var list: Bool = false
-  
+
   @Flag(name: [.customShort("l")],
   help: "Lists fingerprints of keys stored on agent")
   var listFingerprints: Bool = false
-  
+
   // Remove
   @Flag(name: [.customShort("d")],
   help: "Remove key from agent")
   var remove: Bool = false
-  
+
   // Hash algorithm
   @Option(
     name: [.customShort("E")],
     help: "Specify hash algorithm used for fingerprints"
   )
   var hashAlgorithm: String = "sha256"
-  
-  @Flag(name: [.customShort("c")],
-        help: "Confirm before using identity"
-  )
-  var askConfirmation: Bool = false
+
+  // @Flag(name: [.customShort("c")],
+  //       help: "Confirm before using identity"
+  // )
+  // var askConfirmation: Bool = false
 
   @Argument(help: "Key name")
   var keyName: String?
-  
-  @Argument(help: "Agent name")
-  var agentName: String?
+
+  // @Argument(help: "Agent name")
+  // var agentName: String?
 }
 
 @_cdecl("blink_ssh_add")
@@ -91,42 +92,43 @@ public func blink_ssh_add(argc: Int32, argv: Argv) -> Int32 {
 
 public class BlinkSSHAgentAdd: NSObject {
   var command: BlinkSSHAgentAddCommand!
-  
+
   var stdout = OutputStream(file: thread_stdout)
   var stderr = OutputStream(file: thread_stderr)
   let currentRunLoop = RunLoop.current
-  
+
   public func start(_ argc: Int32, argv: [String], session: MCPSession) -> Int32 {
-    let bkConfig: BKConfig
-    do {
-      bkConfig = try BKConfig()
-      command = try BlinkSSHAgentAddCommand.parse(Array(argv[1...]))
+     do {
+       command = try BlinkSSHAgentAddCommand.parse(Array(argv[1...]))
     } catch {
       let message = BlinkSSHAgentAddCommand.message(for: error)
       print(message, to: &stderr)
       return -1
     }
-    
+
+    let _ = SSHDefaultAgent.instance
+
     if command.remove {
       let keyName = command.keyName ?? "id_rsa"
-      if let _ = SSHAgentPool.removeKey(named: keyName) {
+      do {
+        let _ = try SSHDefaultAgent.removeKey(named: keyName)
         print("Key \(keyName) removed.", to: &stdout)
         return 0
-      } else {
-        print("Key not found on Agent", to: &stderr)
+      } catch {
+        print("Couldn't remove key: \(error)", to: &stderr)
         return -1
       }
     }
-    
+
     if command.list {
-      for key in SSHAgentPool.get()?.ring ?? []  {
+      for key in SSHDefaultAgent.instance.ring {
         let str = BKPubKey.withID(key.name)?.publicKey ?? ""
         print("\(str) \(key.name)", to: &stdout)
       }
-      
+
       return 0;
     }
-    
+
     if command.listFingerprints {
       guard
         let alg = SSHDigest(rawValue: command.hashAlgorithm)
@@ -134,37 +136,26 @@ public class BlinkSSHAgentAdd: NSObject {
         print("Invalid hash algorithm \"\(command.hashAlgorithm)\"", to: &stderr)
         return -1;
       }
-      
-      for key in SSHAgentPool.get()?.ring ?? [] {
+
+      for key in SSHDefaultAgent.instance.ring {
         if let blob = try? key.signer.publicKey.encode()[4...],
            let sshkey = try? SSHKey(fromPublicBlob: blob)
         {
           let str = sshkey.fingerprint(digest: alg)
-          
+
           print("\(sshkey.size) \(str) \(key.name) (\(sshkey.sshKeyType.shortName))", to: &stdout)
         }
       }
       return 0
     }
-    
-    // TODO Can we have the same key under different constraints?
-    
+
     // Default case: add key
-    if let (signer, name) = bkConfig.signer(forIdentity: command.keyName ?? "id_rsa") {
-      if let signer = signer as? BlinkConfig.InputPrompter {
-        signer.setPromptOnView(session.device.view)
-      }
-      var constraints: [SSHAgentConstraint]? = nil
-      if command.askConfirmation {
-        constraints = [SSHAgentUserPrompt()]
-      }
-      
-      SSHAgentPool.addKey(signer, named: name, constraints: constraints)
-      print("Key \(name) - added to agent.", to: &stdout)
+    do {
+      try SSHDefaultAgent.addKey(named: command.keyName ?? "id_rsa")
       return 0
-    } else {
-      print("Key not found", to: &stderr)
-      return -1
+    } catch {
+      print("Could not add key \(error)", to: &stderr)
+      return -1;
     }
   }
 }

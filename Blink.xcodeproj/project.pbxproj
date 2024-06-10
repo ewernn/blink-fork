@@ -139,7 +139,7 @@
 		BD8DB648279B512900497C88 /* CodeFileSystemService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8DB646279B512900497C88 /* CodeFileSystemService.swift */; };
 		BD90BE4A2A18466E00DA5686 /* AgentForwardPromptPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD90BE492A18466E00DA5686 /* AgentForwardPromptPickerView.swift */; };
 		BD98AC84260BD8DC00B4E6A1 /* SSHAgentAdd.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD98AC83260BD8DC00B4E6A1 /* SSHAgentAdd.swift */; };
-		BD98AC95260BE20000B4E6A1 /* SSHAgentPool.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD98AC94260BE20000B4E6A1 /* SSHAgentPool.swift */; };
+		BD98AC95260BE20000B4E6A1 /* SSHDefaultAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD98AC94260BE20000B4E6A1 /* SSHDefaultAgent.swift */; };
 		BD9BF7E7262A6B0300B02074 /* SOCKS.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD9BF7E3262A6B0300B02074 /* SOCKS.swift */; };
 		BD9BF7E9262A6B0F00B02074 /* SOCKSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD9BF7E8262A6B0F00B02074 /* SOCKSTests.swift */; };
 		BD9EA1802718D6C400874007 /* NSFileProviderError.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD9EA17C2718D6C400874007 /* NSFileProviderError.swift */; };
@@ -199,6 +199,7 @@
 		BDF2B8D82BC4820F00B9C7EA /* curl_ios.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BDF2B8D62BC481F000B9C7EA /* curl_ios.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		BDF2B8DD2BC48D2800B9C7EA /* LibSSH.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D2334EC425C1C04700385378 /* LibSSH.xcframework */; };
 		BDF2B8DF2BC48D2D00B9C7EA /* libssh2.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D2F64C9525CA99AD00F2225D /* libssh2.xcframework */; };
+		BDF40FEB2C14A6CE00DF41C1 /* AgentSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF40FE92C14A6CE00DF41C1 /* AgentSettingsView.swift */; };
 		BDF471BA268CD17B00A7A41B /* SSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 07FABB8425C9AEC000E1CC2C /* SSH.framework */; };
 		C94437571D8311960096F84E /* BKResource.m in Sources */ = {isa = PBXBuildFile; fileRef = C94437561D8311960096F84E /* BKResource.m */; };
 		C94437601D831CD30096F84E /* Themes in Resources */ = {isa = PBXBuildFile; fileRef = C944375F1D831CD30096F84E /* Themes */; };
@@ -861,7 +862,7 @@
 		BD8DB646279B512900497C88 /* CodeFileSystemService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CodeFileSystemService.swift; sourceTree = "<group>"; };
 		BD90BE492A18466E00DA5686 /* AgentForwardPromptPickerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AgentForwardPromptPickerView.swift; sourceTree = "<group>"; };
 		BD98AC83260BD8DC00B4E6A1 /* SSHAgentAdd.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHAgentAdd.swift; sourceTree = "<group>"; };
-		BD98AC94260BE20000B4E6A1 /* SSHAgentPool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHAgentPool.swift; sourceTree = "<group>"; };
+		BD98AC94260BE20000B4E6A1 /* SSHDefaultAgent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHDefaultAgent.swift; sourceTree = "<group>"; };
 		BD9BF7E3262A6B0300B02074 /* SOCKS.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SOCKS.swift; sourceTree = "<group>"; };
 		BD9BF7E8262A6B0F00B02074 /* SOCKSTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SOCKSTests.swift; sourceTree = "<group>"; };
 		BD9EA17C2718D6C400874007 /* NSFileProviderError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NSFileProviderError.swift; sourceTree = "<group>"; };
@@ -913,6 +914,7 @@
 		BDE84C772BB33AD700457391 /* vim.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = vim.xcframework; path = xcfs/.build/artifacts/xcfs/vim/vim.xcframework; sourceTree = SOURCE_ROOT; };
 		BDEEE36B2B8951D3003003FD /* get_frameworks.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = get_frameworks.sh; sourceTree = "<group>"; };
 		BDF2B8D62BC481F000B9C7EA /* curl_ios.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = curl_ios.xcframework; path = xcfs/.build/artifacts/xcfs/curl_ios/curl_ios.xcframework; sourceTree = SOURCE_ROOT; };
+		BDF40FE92C14A6CE00DF41C1 /* AgentSettingsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AgentSettingsView.swift; sourceTree = "<group>"; };
 		C94437551D8311960096F84E /* BKResource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BKResource.h; sourceTree = "<group>"; };
 		C94437561D8311960096F84E /* BKResource.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BKResource.m; sourceTree = "<group>"; };
 		C944375F1D831CD30096F84E /* Themes */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Themes; sourceTree = "<group>"; };
@@ -1535,7 +1537,7 @@
 				07FAB8EE25C8E6C500E1CC2C /* SSHConfig.swift */,
 				07FAB8EF25C8E6C500E1CC2C /* SSHConfigProvider.swift */,
 				BD98AC83260BD8DC00B4E6A1 /* SSHAgentAdd.swift */,
-				BD98AC94260BE20000B4E6A1 /* SSHAgentPool.swift */,
+				BD98AC94260BE20000B4E6A1 /* SSHDefaultAgent.swift */,
 				BDE7125C2A141E3100164F70 /* SSHAgentUserPrompt.swift */,
 			);
 			path = ssh;
@@ -1833,6 +1835,14 @@
 			path = BlinkConfigTests;
 			sourceTree = "<group>";
 		};
+		BDF40FEA2C14A6CE00DF41C1 /* AgentSettings */ = {
+			isa = PBXGroup;
+			children = (
+				BDF40FE92C14A6CE00DF41C1 /* AgentSettingsView.swift */,
+			);
+			path = AgentSettings;
+			sourceTree = "<group>";
+		};
 		C989E53B1D6CC488003E0079 /* BKHosts */ = {
 			isa = PBXGroup;
 			children = (
@@ -1924,6 +1934,7 @@
 		C9B2E0141D6B612300B89F69 /* ViewControllers */ = {
 			isa = PBXGroup;
 			children = (
+				BDF40FEA2C14A6CE00DF41C1 /* AgentSettings */,
 				D21076992A69231D00B3D77E /* Snippets */,
 				D2B788862949E8A400F19E4F /* Build */,
 				D2AD8E8527A2C81900DED28D /* Subscriptions */,
@@ -3298,7 +3309,7 @@
 				07F670761D05EEE200C0A53C /* SSHCopyIDSession.m in Sources */,
 				D264D2B428F84592002B1B14 /* Models.swift in Sources */,
 				D22B16D828CF6ED20004EEC1 /* NewPasskeyView.swift in Sources */,
-				BD98AC95260BE20000B4E6A1 /* SSHAgentPool.swift in Sources */,
+				BD98AC95260BE20000B4E6A1 /* SSHDefaultAgent.swift in Sources */,
 				D2C244352390FEEF0082C69C /* KeyBindingAction.swift in Sources */,
 				D241CBDA23040734003D64A5 /* KBTraits.swift in Sources */,
 				B752EE2B1DFEF19D00E305C8 /* BKUserConfigurationManager.m in Sources */,
@@ -3441,6 +3452,7 @@
 				D22277FE2A26204900D4C708 /* SnippetView.swift in Sources */,
 				D2499BEC2362EFD40009C701 /* cpp.cpp in Sources */,
 				D264D2B328F84592002B1B14 /* UnavailErrorView.swift in Sources */,
+				BDF40FEB2C14A6CE00DF41C1 /* AgentSettingsView.swift in Sources */,
 				D2B788852949C53100F19E4F /* BuildView.swift in Sources */,
 				D20CBA5A2360324100D93301 /* CompleteUtils.swift in Sources */,
 				D265FBC9231905AC0017EAC4 /* NSCoder+CodingKey.swift in Sources */,

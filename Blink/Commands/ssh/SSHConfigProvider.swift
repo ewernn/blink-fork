@@ -142,7 +142,7 @@ extension SSHClientConfigProvider {
     }
 
     // Link to Default Agent
-    agent.linkTo(agent: SSHAgentPool.defaultAgent)
+    agent.linkTo(agent: SSHDefaultAgent.instance)
     return agent
   }
 
