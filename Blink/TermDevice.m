@@ -214,17 +214,17 @@ static int __sizeOfIncompleteSequenceAtTheEnd(const char *buffer, size_t len) {
   
   // Cook
   if ([input isEqualToString:ctrlC] || [input isEqualToString:ctrlD]) {
-    [self closeReadline];
+    // [self closeReadline];
 
-    if (_readlineSema) {
-      [self _EOT];
-      if ([input isEqualToString: ctrlC]) {
-        fprintf(_stream.err, "^C\n");
-      }
-      if ([input isEqualToString: ctrlD]) {
-        fprintf(_stream.err, "^D\n");
-      }
+    [self _EOT];
+    //if (_readlineSema) {
+    if ([input isEqualToString: ctrlC]) {
+      fprintf(_stream.err, "^C\n");
     }
+    if ([input isEqualToString: ctrlD]) {
+      fprintf(_stream.err, "^D\n");
+    }
+      //}
     // NOTE This should send specific signals instead of handling the control openly, but won't change for now.
     [self.delegate handleControl: input];
     return;
