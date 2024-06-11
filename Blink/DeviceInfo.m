@@ -72,8 +72,10 @@
 
     _hasCorners = _hasNotch || [_machine hasPrefix:@"iPad8"]
       || [_machine hasPrefix:@"iPad13"]
-      //      || [_machine hasPrefix:@"iPad14"]
-      //      || [_machine hasPrefix:@"iPad16"]
+      || [_machine hasPrefix:@"iPad14"]
+      || [_machine hasPrefix:@"iPad16"]
+      || [marketingName containsString:@"(M2)"]
+      || [marketingName containsString:@"(M4)"]
       || [marketingName hasPrefix:@"Mac"];
 
     _hasAppleSilicon = [marketingName hasPrefix:@"iPad Pro (11-inch) (3rd generation)"]
