@@ -95,8 +95,13 @@ NSString * LayoutManagerBottomInsetDidUpdate = @"LayoutManagerBottomInsetDidUpda
       result = deviceMargins;
       if (DeviceInfo.shared.hasCorners &&
           UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad) {
-        result.top = 16;
-        result.bottom = 16;
+        if ([DeviceInfo.shared.marketingName containsString:@"M4"]) {
+          result.top = 25;
+          result.bottom = 25;
+        } else {
+          result.top = 16;
+          result.bottom = 16;
+        }
       }
       
       break;
@@ -108,10 +113,17 @@ NSString * LayoutManagerBottomInsetDidUpdate = @"LayoutManagerBottomInsetDidUpda
       }
       
       if (!deviceInfo.hasNotch) {
-        result.top = 5;
-        result.left = 5;
-        result.right = MAX(deviceMargins.right, 5);
-        result.bottom = fullScreen ? 5 : 10;
+        if ([DeviceInfo.shared.marketingName containsString:@"M4"]) {
+          result.top = 8;
+          result.left = 8;
+          result.right = MAX(deviceMargins.right, 8);
+          result.bottom = fullScreen ? 8 : 10;
+        } else {
+          result.top = 5;
+          result.left = 5;
+          result.right = MAX(deviceMargins.right, 5);
+          result.bottom = fullScreen ? 5 : 10;
+        }
         break;
       }
       
