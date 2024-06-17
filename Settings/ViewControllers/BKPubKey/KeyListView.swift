@@ -102,11 +102,11 @@ struct KeySortView: View {
 
 //MARK: - Main New Key View
 struct NewKeyMenuContentView: View {
-  
+
   @Binding var isMenuPresented: Bool
-  
-  fileprivate var state: KeysObservable
-  
+
+  @ObservedObject fileprivate var _state: KeysObservable
+
   var body: some View {
     NavigationView {
       Form {
@@ -133,6 +133,7 @@ struct NewKeyMenuContentView: View {
           }
       )
     }
+    //.alert(errorMessage: $state.errorMessage)
   }
 }
 
@@ -148,30 +149,31 @@ private extension NewKeyMenuContentView {
         }
         .padding([.top], 10)
         .padding([.trailing], 8)
-        
+
         VStack(alignment: .leading) {
           baseCellTitle("Plain-text Key")
           baseCellSubtitle("Create RSA, EDSA and ED25519 keys, securely stored in the keychain.", docsLink: "basics/ssh-keys")
-          
+
           actionsDivider()
           actionButtonTitle(title: "Generate New", tintColor: .systemTeal)
             .onTapGesture {
               dismissView()
-              self.state.modal = .newKey
+              self._state.modal = .newKey
             }
           actionsDivider()
           actionButtonTitle(title: "Import from File", tintColor: .label)
             .onTapGesture {
               dismissView()
-              self.state.filePickerIsPresented = true
+              self._state.filePickerIsPresented = true
             }
           actionsDivider()
           actionButtonTitle(title: "Import from Clipboard", tintColor: .label)
             .onTapGesture {
               dismissView()
-              self.state.importFromClipboard()
+              self._state.importFromClipboard()
             }
         }
+
         .padding([.top], 4)
       }
     }
@@ -185,16 +187,16 @@ private extension NewKeyMenuContentView {
         }
         .padding([.top], 10)
         .padding([.trailing], 8)
-        
+
         VStack(alignment: .leading) {
           baseCellTitle("Secure Enclave Key")
           baseCellSubtitle("Isolated in your device, enhances security by managing keys without exposing plain-text.", docsLink: "basics/ssh-keys")
-          
+
           actionsDivider()
           actionButtonTitle(title: "Generate New", tintColor: .systemTeal)
             .onTapGesture {
               dismissView()
-              self.state.modal = .newSEKey
+              self._state.modal = .newSEKey
             }
         }
         .padding([.top], 4)
@@ -210,68 +212,73 @@ private extension NewKeyMenuContentView {
         }
         .padding([.top], 10)
         .padding([.trailing], 8)
-        
+
         VStack(alignment: .leading) {
           baseCellTitle("Passkey (experimental)")
           baseCellSubtitle("WebAuthn keys for SSH are stored in your device or hardware key. Limitations apply.", docsLink: "advanced/webauthn")
-          
+
           actionsDivider()
           actionButtonTitle(title: "Generate on device", tintColor: .systemTeal)
             .onTapGesture {
               dismissView()
-              self.state.modal = .newPasskey
+              self._state.modal = .newPasskey
             }
           actionsDivider()
           actionButtonTitle(title: "Generate on Hardware key", tintColor: .label)
             .onTapGesture {
               dismissView()
-              self.state.modal = .newSecurityKey
+              self._state.modal = .newSecurityKey
             }
         }
         .padding([.top], 4)
       }
     }
   }
-  
-  
+
+
   //MARK: Fast methods
   func dismissView() {
     self.isMenuPresented = false
   }
-  
-  
+
+
   //MARK: Fast New Key properties
   func baseCellTitle(_ content: String) -> some View {
     Text(content)
       .font(.system(size: 16, weight: .semibold))
       .frame(height: 14)
   }
-  
+
   func baseCellSubtitle(_ content: String, docsLink: String) -> some View {
     let docsLink = "https://docs.blink.sh/\(docsLink)"
     return Text(try! AttributedString(markdown: "\(content)\n[Read more.](\(docsLink))"))
       .font(.system(size: 14, weight: .regular))
       .foregroundStyle(Color.secondary)
   }
-  
+
   func baseCellIcon(systemName: String) -> some View {
     ZStack {
       RoundedRectangle(cornerRadius: 10)
         .stroke(.secondary.opacity(0.3), lineWidth: 0.8)
         .frame(width: 42, height: 42)
-      
+
       Image(systemName: systemName)
         .foregroundStyle(Color.teal)
     }
     .frame(maxWidth: 42, maxHeight: 42)
   }
-  
+
   func actionButtonTitle(title: String, tintColor: UIColor) -> some View {
-    Text(title)
-      .foregroundStyle(Color(tintColor))
-      .font(.system(size: 16))
+    HStack {
+      Text(title)
+        .foregroundStyle(Color(tintColor))
+        .font(.system(size: 16))
+      Spacer()
+    }
+      .background(Color.gray.opacity(0.2))
+      .frame(maxWidth: .infinity)
   }
-  
+
   func actionsDivider() -> some View {
     Divider()
       .padding(.bottom, 1)
@@ -283,15 +290,16 @@ private extension NewKeyMenuContentView {
 //MARK: - Main Keys List View
 struct KeyListView: View {
   @StateObject private var _state = KeysObservable()
-  
+
   @Environment(\.presentationMode) var presentationMode
   @State private var isMenuPresented = false
+  @State private var showAlert = false
 
   var body: some View {
     Group {
       if _state.list.isEmpty {
         EmptyStateHandlerView(
-          action: toggleNewKeyView, 
+          action: toggleNewKeyView,
           title: "Add Key",
           systemIconName: "key"
         )
@@ -314,6 +322,15 @@ struct KeyListView: View {
         }
       }
     }
+    .alert(isPresented: $showAlert) {
+      Alert(
+        title: Text("Error"),
+        message: Text(_state.errorMessage ?? "Unknown error"),
+        dismissButton: .default(Text("OK")) {
+          _state.errorMessage = nil
+        }
+      )
+    }
     .onAppear {
       if _state.list.isEmpty {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -326,7 +343,7 @@ struct KeyListView: View {
       trailing: HStack {
         if !_state.list.isEmpty {
           KeySortView(sortType: $_state.sortType)
-          
+
           Button(action: {
             toggleNewKeyView()
           }) {
@@ -341,10 +358,17 @@ struct KeyListView: View {
     .fileImporter(
       isPresented: $_state.filePickerIsPresented,
       allowedContentTypes: [.text, .data, .item],
-      onCompletion: _state.importFromFile
+      onCompletion: {
+        _state.importFromFile(result: $0)
+        if _state.errorMessage != nil { showAlert = true }
+      }
     )
-    .fullScreenCover(isPresented: $isMenuPresented) {
-      NewKeyMenuContentView(isMenuPresented: $isMenuPresented, state: _state)
+    .sheet(isPresented: $isMenuPresented,
+           onDismiss: {
+             if _state.errorMessage != nil { showAlert = true }
+           }
+    ) {
+      NewKeyMenuContentView(isMenuPresented: $isMenuPresented, _state: _state)
     }
     .sheet(item: $_state.modal) { modal in
       NavigationView {
@@ -393,9 +417,8 @@ struct KeyListView: View {
         }
       }
     }
-    .alert(errorMessage: $_state.errorMessage)
   }
-  
+
   //MARK: Fast methods
   func toggleNewKeyView() {
     isMenuPresented.toggle()
@@ -440,7 +463,7 @@ fileprivate class KeysObservable: ObservableObject {
   @Published var filePickerIsPresented: Bool = false
   @Published var modal: KeyModals? = nil
   var addKeyObservable: ImportKeyObservable? = nil
-  @Published var errorMessage = ""
+  @Published var errorMessage: String? = nil
   var proposedKeyName = ""
 
   init() { }
@@ -525,7 +548,7 @@ fileprivate class KeysObservable: ObservableObject {
     } catch SSHKeyError.wrongPassphrase {
       modal = .passphrasePrompt(keyBlob: blob, proposedKeyName: proposedKeyName)
     } catch {
-      return _showError(message: error.localizedDescription)
+      return _showError(message: "Could not import key - \(error.localizedDescription)")
     }
   }
 
