@@ -368,6 +368,9 @@ extension SSHKey {
 
   public static func sanitize(key str: String) -> String {
     var key = str
+    // Replace unicode line separator with linefeed.
+    key = key.replacingOccurrences(of: "\u{2028}", with: "\n")
+
     if let r = key.range(of: "-----BEGIN") {
       key.removeSubrange(..<r.lowerBound)
     }
