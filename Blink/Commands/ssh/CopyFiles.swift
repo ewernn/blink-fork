@@ -269,7 +269,7 @@ public class BlinkCopy: NSObject {
         rc = -1
       }
       
-      self.kill()
+      self.stop()
     }, receiveValue: { progress in //(file, size, written) in
       // ProgressReport object, which we can use here or at the Dashboard.
       if currentFile != progress.name {
@@ -310,8 +310,9 @@ public class BlinkCopy: NSObject {
 
     // Run everything in its own loop...
     CFRunLoopRunInMode(.defaultMode, TimeInterval(INT_MAX), false)
-    
+
     // ...and because of that, make another run after cleanup to let hanging self-loops close.
+    copyCancellable = nil
     sourceTranslator = nil
     destTranslator = nil
     RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.5))
@@ -356,6 +357,10 @@ public class BlinkCopy: NSObject {
   @objc func kill() {
     print("\r\nOperation cancelled", to: &self.stderr)
     copyCancellable = nil
+    stop()
+  }
+
+  func stop() {
     CFRunLoopStop(self.currentRunLoop.getCFRunLoop())
   }
 }
