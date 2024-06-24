@@ -142,7 +142,12 @@ extension SSHClientConfigProvider {
     }
 
     // Link to Default Agent
-    agent.linkTo(agent: SSHDefaultAgent.instance)
+    if let defaultAgent = SSHDefaultAgent.instance {
+      agent.linkTo(agent: defaultAgent)
+    } else {
+      printLn("Default agent is not available.")
+    }
+
     return agent
   }
 

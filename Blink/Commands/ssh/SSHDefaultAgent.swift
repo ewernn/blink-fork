@@ -35,7 +35,7 @@ import SSH
 
 
 final class SSHDefaultAgent {
-  public static var instance: SSHAgent {
+  public static var instance: SSHAgent? {
     if let agent = Self._instance {
       return agent
     } else {
@@ -44,6 +44,7 @@ final class SSHDefaultAgent {
   }
   private static var _instance: SSHAgent? = nil
   private init() {}
+  // The pool is responsible for the location of Agents.
   private static let defaultAgentFile: URL = BlinkPaths.blinkAgentSettingsURL().appendingPathComponent("default")
 
   enum Error: Swift.Error, LocalizedError {
@@ -57,29 +58,40 @@ final class SSHDefaultAgent {
     }
   }
 
-  private static func load() -> SSHAgent {
-    let instance = SSHAgent()
-    Self._instance = instance
-    // If the Settings are not available, the agent is initialized with the default configuration.
-    // If there is a problem with the location, it is safe to assume that it will persist.
-    if let settings = try? getSettings() {
-      try? applySettings(settings)
-    } else {
-      try? setSettings(BKAgentSettings(prompt: .Confirm, keys: []))
+  // Load the (default) agent in the pool. If the Agent cannot be loaded, it will be unavailable (nil).
+  // If the agent doesn't exist, it will be initialized (default only).
+  private static func load() -> SSHAgent? {
+    do {
+      if let settings = try getSettings() {
+        try setAgentInstance(with: settings)
+      } else {
+        try setSettings(BKAgentSettings())
+      }
+    } catch {
+      return nil
     }
-    return instance
+
+    return Self._instance
   }
 
+  // Create the settings for the agent and load it in the pool.
+  // NOTE: For non-default agents, this would be the main initialization method.
   static func setSettings(_ settings: BKAgentSettings) throws {
     try BKAgentSettings.save(settings: settings, to: defaultAgentFile)
-    try applySettings(settings)
+    try setAgentInstance(with: settings)
   }
 
-  private static func applySettings(_ settings: BKAgentSettings) throws {
-    let agent = Self.instance
-    agent.clear()
-
+  private static func setAgentInstance(with settings: BKAgentSettings) throws {
     let bkConfig = try BKConfig()
+
+    let agent: SSHAgent
+    if let _instance = Self._instance {
+      agent = _instance
+      agent.clear()
+    } else {
+      agent = SSHAgent()
+      Self._instance = agent
+    }
 
     settings.keys.forEach { key in
       if let (signer, name) = bkConfig.signer(forIdentity: key) {
@@ -90,18 +102,21 @@ final class SSHDefaultAgent {
     }
   }
 
-  static func getSettings() throws -> BKAgentSettings {
-    try BKAgentSettings.load(from: defaultAgentFile)
+  static func getSettings() throws -> BKAgentSettings? {
+    try BKAgentSettings.read(from: defaultAgentFile)
   }
 
   // Applying settings clears the agent first. Adding a key doesn't modify or reset previous constraints.
   static func addKey(named keyName: String) throws {
-    let settings = try getSettings()
+    guard let agent = Self.instance,
+          let settings = try getSettings() else {
+      return
+    }
+
     if settings.keys.contains(keyName) {
       return
     }
 
-    let agent = Self.instance
     let bkConfig = try BKConfig()
 
     if let (signer, name) = bkConfig.signer(forIdentity: keyName) {
@@ -124,8 +139,9 @@ final class SSHDefaultAgent {
 
   static func removeKey(named keyName: String) throws -> Signer? {
     // Remove from settings and apply
-    let settings = try getSettings()
-    guard settings.keys.contains(keyName) else {
+    guard let agent = Self.instance,
+          let settings = try getSettings(),
+          settings.keys.contains(keyName) else {
       return nil
     }
 
@@ -133,7 +149,7 @@ final class SSHDefaultAgent {
     keys.removeAll(where: { $0 == keyName })
     try BKAgentSettings.save(settings: BKAgentSettings(prompt: settings.prompt, keys: keys), to: defaultAgentFile)
 
-    return Self.instance.removeKey(keyName)
+    return agent.removeKey(keyName)
   }
 }
 
@@ -151,17 +167,22 @@ struct BKAgentSettings: Codable, Equatable {
   let prompt: BKAgentSettingsPrompt
   let keys: [String]
 
-//  init(prompt: BKAgentSettingsPrompt, keys: [String]) {
-//    self.prompt = prompt
-//    self.keys = keys
-//  }
+  init(prompt: BKAgentSettingsPrompt, keys: [String]) {
+    self.prompt = prompt
+    self.keys = keys
+  }
+
+  init() { self = Self(prompt: .Confirm, keys: []) }
 
   static func save(settings: BKAgentSettings, to file: URL) throws {
     let data = try JSONEncoder().encode(settings)
     try data.write(to: file)
   }
 
-  static func load(from file: URL) throws -> BKAgentSettings {
+  fileprivate static func read(from file: URL) throws -> BKAgentSettings? {
+    guard FileManager.default.fileExists(atPath: file.path) else {
+      return nil
+    }
     let data = try Data(contentsOf: file)
     return try JSONDecoder().decode(BKAgentSettings.self, from: data)
   }

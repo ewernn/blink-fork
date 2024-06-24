@@ -63,7 +63,7 @@ struct DefaultAgentSettingsView: View {
       if agentSettings == nil {
         print("Init settings")
         do {
-          let agentSettings = try SSHDefaultAgent.getSettings()
+          let agentSettings = try SSHDefaultAgent.getSettings() ?? BKAgentSettings()
           self.agentSettings = agentSettings
         } catch {
           self.alertMessage = "Failed to get settings: \(error.localizedDescription)"

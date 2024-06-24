@@ -98,15 +98,18 @@ public class BlinkSSHAgentAdd: NSObject {
   let currentRunLoop = RunLoop.current
 
   public func start(_ argc: Int32, argv: [String], session: MCPSession) -> Int32 {
-     do {
-       command = try BlinkSSHAgentAddCommand.parse(Array(argv[1...]))
+    do {
+      command = try BlinkSSHAgentAddCommand.parse(Array(argv[1...]))
     } catch {
       let message = BlinkSSHAgentAddCommand.message(for: error)
       print(message, to: &stderr)
       return -1
     }
 
-    let _ = SSHDefaultAgent.instance
+    guard let defaultAgent = SSHDefaultAgent.instance else {
+      print("Default Agent is not available.", to: &stderr)
+      return -1
+    }
 
     if command.remove {
       let keyName = command.keyName ?? "id_rsa"
@@ -121,7 +124,7 @@ public class BlinkSSHAgentAdd: NSObject {
     }
 
     if command.list {
-      for key in SSHDefaultAgent.instance.ring {
+      for key in defaultAgent.ring {
         let str = BKPubKey.withID(key.name)?.publicKey ?? ""
         print("\(str) \(key.name)", to: &stdout)
       }
@@ -137,7 +140,7 @@ public class BlinkSSHAgentAdd: NSObject {
         return -1;
       }
 
-      for key in SSHDefaultAgent.instance.ring {
+      for key in defaultAgent.ring {
         if let blob = try? key.signer.publicKey.encode()[4...],
            let sshkey = try? SSHKey(fromPublicBlob: blob)
         {
