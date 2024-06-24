@@ -275,7 +275,7 @@ private extension NewKeyMenuContentView {
         .font(.system(size: 16))
       Spacer()
     }
-      .background(Color.gray.opacity(0.2))
+      // .background(Color.gray.opacity(0.2))
       .frame(maxWidth: .infinity)
   }
 
