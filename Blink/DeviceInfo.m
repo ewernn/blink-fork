@@ -65,10 +65,12 @@
       || [marketingName hasPrefix:@"iPhone 12"]
       || [marketingName hasPrefix:@"iPhone 13"]
       || [marketingName hasPrefix:@"iPhone 14"]
-      || [marketingName hasPrefix:@"iPhone 15"];
+      || [marketingName hasPrefix:@"iPhone 15"]
+      || [marketingName hasPrefix:@"iPhone 16"];
 
     _hasDynamicIsland = [marketingName hasPrefix:@"iPhone 14"]
-      || [marketingName hasPrefix:@"iPhone 15"];
+      || [marketingName hasPrefix:@"iPhone 15"]
+      || [marketingName hasPrefix:@"iPhone 16"];
 
     _hasCorners = _hasNotch || [_machine hasPrefix:@"iPad8"]
       || [_machine hasPrefix:@"iPad13"]
@@ -199,6 +201,10 @@
     @"iPhone15,5":  @"iPhone 15 Plus",
     @"iPhone16,1":  @"iPhone 15 Pro",
     @"iPhone16,2":  @"iPhone 15 Pro Max",
+    @"iPhone17,1":  @"iPhone 16 Pro",
+    @"iPhone17,2":  @"iPhone 16 Pro Max",
+    @"iPhone17,3":  @"iPhone 16",
+    @"iPhone17,4":  @"iPhone 16 Plus",
     
                        
     @"iPad4,1"   : @"iPad Air",          // 5th Generation iPad (iPad Air) - Wifi

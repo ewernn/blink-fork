@@ -105,6 +105,8 @@ enum KBDevice {
     // |  7 | iPhone 14 Pro        |  852 |  693 |      |     |
     // |  8 | iPhone 14 Pro Max    |  932 |  812 |      |     |
     // |  9 | iPhone SE 3d-gen     |  667 |  568 |      |     |
+    // |    | iPhone 16 Pro        |  874 |  693 |      |     |
+    // |    | iPhone 16 Pro Max    |  956 |  812 |      |     |
     // | 10 | iPad 7th-gen         | 1080 |      |      |     |
     // | 11 | iPad 8th-gen         | 1080 |      |      |     |
     // | 12 | iPad 9th-gen         | 1180 |      |      |     |
@@ -132,9 +134,11 @@ enum KBDevice {
     case 812:  return .in5_8 // iPhone 11 Pro, iPhone 12 Pro Max ZLT
     case 844:  return .in6_1 // iPhone 12 Pro, iPhone 14
     case 852:  return .in6_1 // iPhone 14 Pro
+    case 874:  return .in6_1 // iPhone 16
     case 896:  return .in6_5 // iPhone 11 Pro Max
     case 926:  return .in6_7 // iPhone 12 Pro Max, iPhone 14 Plus
     case 932:  return .in6_7 // iPhone 14 Pro Max
+    case 956:  return .in6_7
     case 1024, 1032:
       // tune for ipad 12 ZLT
       return DeviceInfo.shared().hasCorners ? .in12_9 : .in9_7 // iPad 12.9 ZLT
