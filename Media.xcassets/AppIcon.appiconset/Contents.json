@@ -114,7 +114,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "Icon-40@1x.png",
+      "filename" : "Icon-20@2x.png",
       "idiom" : "universal",
       "platform" : "ios",
       "scale" : "2x",
@@ -204,7 +204,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "Icon-60@2x.png",
+      "filename" : "Icon-40@3x.png",
       "idiom" : "universal",
       "platform" : "ios",
       "scale" : "3x",
@@ -217,7 +217,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "Icon-60@2x 1.png",
+      "filename" : "Icon-60@2x.png",
       "idiom" : "universal",
       "platform" : "ios",
       "scale" : "2x",
