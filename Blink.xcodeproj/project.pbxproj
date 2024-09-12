@@ -111,6 +111,8 @@
 		BD792A512A3BDAC4009EE35F /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = BD792A502A3BDAC4009EE35F /* ZIPFoundation */; };
 		BD7AFC4128E8E98C004BCDA4 /* Base32Kit in Frameworks */ = {isa = PBXBuildFile; productRef = BD7AFC4028E8E98C004BCDA4 /* Base32Kit */; };
 		BD7AFC4328E8E9A9004BCDA4 /* Base32Kit in Frameworks */ = {isa = PBXBuildFile; productRef = BD7AFC4228E8E9A9004BCDA4 /* Base32Kit */; };
+		BD801D202C9352E800556515 /* curl_ios.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = BDF2B8D62BC481F000B9C7EA /* curl_ios.xcframework */; };
+		BD801D212C9352E800556515 /* curl_ios.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BDF2B8D62BC481F000B9C7EA /* curl_ios.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		BD81522027387D1F002BB169 /* Certificates.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD81521C27387D1F002BB169 /* Certificates.swift */; };
 		BD81522D2739A91D002BB169 /* BlinkLogging.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD9EA20A271F62ED00874007 /* BlinkLogging.swift */; };
 		BD81522E2739A91D002BB169 /* Publisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD9EA20C271F664D00874007 /* Publisher.swift */; };
@@ -196,7 +198,6 @@
 		BDE84C522BB233FB00457391 /* bc_ios.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BDE84C502BB233F100457391 /* bc_ios.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		BDF2B8D32BC480CC00B9C7EA /* vim.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BDE84C772BB33AD700457391 /* vim.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		BDF2B8D52BC480D100B9C7EA /* xxd.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BDE84C762BB33AB800457391 /* xxd.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		BDF2B8D82BC4820F00B9C7EA /* curl_ios.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BDF2B8D62BC481F000B9C7EA /* curl_ios.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		BDF2B8DD2BC48D2800B9C7EA /* LibSSH.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D2334EC425C1C04700385378 /* LibSSH.xcframework */; };
 		BDF2B8DF2BC48D2D00B9C7EA /* libssh2.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D2F64C9525CA99AD00F2225D /* libssh2.xcframework */; };
 		BDF40FEB2C14A6CE00DF41C1 /* AgentSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF40FE92C14A6CE00DF41C1 /* AgentSettingsView.swift */; };
@@ -688,9 +689,9 @@
 				D2334F0125C1C28F00385378 /* shell.xcframework in Embed Frameworks */,
 				07FABB9A25C9AEC100E1CC2C /* SSH.framework in Embed Frameworks */,
 				BDCB7166268E1577007D7047 /* BlinkConfig.framework in Embed Frameworks */,
-				BDF2B8D82BC4820F00B9C7EA /* curl_ios.xcframework in Embed Frameworks */,
 				D24AFD59222410E700CFD3C1 /* MBProgressHUD.framework in Embed Frameworks */,
 				D2334F0725C1C28F00385378 /* text.xcframework in Embed Frameworks */,
+				BD801D212C9352E800556515 /* curl_ios.xcframework in Embed Frameworks */,
 				BDE84C522BB233FB00457391 /* bc_ios.xcframework in Embed Frameworks */,
 				D2334EF525C1C28F00385378 /* ios_system.xcframework in Embed Frameworks */,
 				D2334F0525C1C28F00385378 /* tar.xcframework in Embed Frameworks */,
@@ -1341,6 +1342,7 @@
 				D2334EFA25C1C28F00385378 /* network_ios.xcframework in Frameworks */,
 				D2A6398928CFA0B90066FD18 /* SwiftCBOR in Frameworks */,
 				D24AFD58222410E700CFD3C1 /* MBProgressHUD.framework in Frameworks */,
+				BD801D202C9352E800556515 /* curl_ios.xcframework in Frameworks */,
 				D22277E12A26115300D4C708 /* BlinkSnippets.framework in Frameworks */,
 				B700AED81DD0F2C200100EBF /* CloudKit.framework in Frameworks */,
 				D2334F0425C1C28F00385378 /* tar.xcframework in Frameworks */,

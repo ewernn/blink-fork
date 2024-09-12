@@ -74,8 +74,8 @@ var binaryTargets: [PackageDescription.Target] = [
   ),
   (
     "curl_ios",
-    "59b437111a5e47039fc900ce207ca0a4b3a7d411cebb576beae3f0631a05922e",
-    "https://github.com/holzschu/ios_system/releases/download/v3.0.3/curl_ios.xcframework.zip"
+    "c146c15b51ae191d7e23cd299c1d670d128a28f331c8ccc3a2aed9b162d13f80",
+    "https://github.com/blinksh/ios_system/releases/download/v3.0.3%2Bblink-17.3.0/curl_ios.xcframework.zip"
   ),
   (
     "bc",
