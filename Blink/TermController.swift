@@ -236,11 +236,6 @@ class TermController: UIViewController {
     view.setNeedsLayout()
   }
   
-  override func viewWillAppear(_ animated: Bool) {
-    super.viewWillAppear(animated);
-    resumeIfNeeded()
-  }
-  
   public override func viewWillLayoutSubviews() {
     super.viewWillLayoutSubviews()
     

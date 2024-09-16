@@ -583,9 +583,11 @@ extension SpaceController: UIPageViewControllerDelegate {
     else {
       return
     }
+    termController.resumeIfNeeded()
     _currentKey = termController.meta.key
     _displayHUD()
     _attachInputToCurrentTerm()
+    
   }
 }
 

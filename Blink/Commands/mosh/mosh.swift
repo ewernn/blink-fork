@@ -86,6 +86,7 @@ enum MoshError: Error, LocalizedError {
 
   let stateCallback: mosh_state_callback = { (context, buffer, size) in
     guard let buffer = buffer, let context = context else {
+      //print("Mosh returned with no encoded state.")
       return
     }
     let data = Data(bytes: buffer, count: size)
@@ -110,12 +111,14 @@ enum MoshError: Error, LocalizedError {
   }
 
   @objc public override func main(_ argc: Int32, argv: Argv) -> Int32 {
+    //print("mosh main")
     mcpSession.setActiveSession()
     self.currentRunLoop = RunLoop.current
     // In ObjC, sessionParams is a covariable for MoshParams.
     // In Swift we need to cast.
     if let initialMoshParams = self.sessionParams as? MoshParams,
        let _ = initialMoshParams.encodedState {
+      //print("Init mosh from Params")
       return moshMain(initialMoshParams)
     } else {
       let command: MoshCommand
@@ -241,6 +244,8 @@ enum MoshError: Error, LocalizedError {
   }
 
   private func moshMain(_ moshParams: MoshParams) -> Int32 {
+    //print("moshMain active")
+    
     let originalRawMode = device.rawMode
     self.device.rawMode = true
 
