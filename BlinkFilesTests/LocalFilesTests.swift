@@ -176,7 +176,7 @@ class LocalFilesTests: XCTestCase {
     f.walkTo("/Users/carlos/Xcode_12.0.1.xip")
       .flatMap { $0.open(flags: O_RDONLY) }
       .flatMap { srcFile -> AnyPublisher<Int, Error> in
-        return dst.create(name: "Docker-copy.dmg", flags: O_WRONLY, mode: 0o644)
+        return dst.create(name: "Docker-copy.dmg", mode: 0o644)
           .flatMap { dstFile in
             return (srcFile as! WriterTo).writeTo(dstFile)
           }.eraseToAnyPublisher()

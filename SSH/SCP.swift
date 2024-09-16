@@ -383,7 +383,7 @@ extension SCPClient {
   
   // Flow when receiving a file to copy. Create on Translator and then Write to it.
   func copyFileTo(translator: Translator, usingName name: String, length: UInt64, mode: mode_t) -> CopyProgressInfoPublisher {
-    return translator.create(name: name, flags: O_RDWR, mode: mode).flatMap { file -> CopyProgressInfoPublisher in
+    return translator.create(name: name, mode: mode).flatMap { file -> CopyProgressInfoPublisher in
       var totalWritten: UInt64 = 0
       
       return self.writeTo(file, length: length).map { written in

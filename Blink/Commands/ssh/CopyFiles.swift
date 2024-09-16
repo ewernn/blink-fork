@@ -252,7 +252,7 @@ public class BlinkCopy: NSObject {
               let newFileName = (self.command.destination.filePath as NSString).lastPathComponent
               let parentPath = (self.command.destination.filePath as NSString).deletingLastPathComponent
               return d.cloneWalkTo(parentPath)
-                .flatMap { $0.create(name: newFileName, flags: O_WRONLY, mode: S_IRWXU) }
+                .flatMap { $0.create(name: newFileName, mode: S_IRWXU) }
                 .flatMap { $0.close() }
                 .flatMap { _ in d.cloneWalkTo(self.command.destination.filePath) }
                 .eraseToAnyPublisher()

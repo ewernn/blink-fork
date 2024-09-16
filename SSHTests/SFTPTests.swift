@@ -133,19 +133,23 @@ class SFTPTests: XCTestCase {
   }
   
   func testWrite() throws {
-    let expectation = self.expectation(description: "Buffer Written")
+    let writeExpectation = self.expectation(description: "File Written")
     
     //var connection: SSHClient?
-    //var sftp: SFTPClient?
+    var root: SFTPTranslator? = nil
     var totalWritten = 0
     
     let gen = RandomInputGenerator(fast: true)
     
-    let cancellable = SSHClient.dialWithTestConfig()
+    let cancelWrite = SSHClient.dialWithTestConfig()
       .flatMap() { $0.requestSFTP() }
-      .tryMap()  { try SFTPTranslator(on: $0) }
+      .tryMap()  { t in
+        let r = try SFTPTranslator(on: t)
+        root = r
+        return r
+      }
       .flatMap() { $0.walkTo("/tmp") }
-      .flatMap() { $0.create(name: "newfile", flags: O_WRONLY, mode: S_IRWXU) }
+      .flatMap() { $0.create(name: "newfile", mode: S_IRWXU) }
       .flatMap() { file in
         return gen.read(max: 5 * 1024 * 1024)
           .flatMap() { data in
@@ -154,7 +158,7 @@ class SFTPTests: XCTestCase {
       }.sink(receiveCompletion: { completion in
         switch completion {
         case .finished:
-          expectation.fulfill()
+          writeExpectation.fulfill()
         case .failure(let error):
           // Problem here is we can have both SFTP and SSHError
           if let err = error as? SSH.FileError {
@@ -169,6 +173,51 @@ class SFTPTests: XCTestCase {
     
     waitForExpectations(timeout: 15, handler: nil)
     XCTAssert(totalWritten == 5 * 1024 * 1024, "Did not write all data")
+    
+    totalWritten = 0
+    let overwriteExpectation = self.expectation(description: "File Overwritten")
+    
+    guard let root = root else {
+      XCTFail("No root translator.")
+      return
+    }
+    
+    let cancelOverwrite = root.walkTo("/tmp")
+      .flatMap() { $0.create(name: "newfile", mode: S_IRWXU) }
+      .flatMap() { file in
+        return gen.read(max: 4 * 1024 * 1024)
+          .flatMap() { data in
+            return file.write(data, max: data.count)
+          }
+      }.sink(receiveCompletion: { completion in
+        switch completion {
+        case .finished:
+          overwriteExpectation.fulfill()
+        case .failure(let error):
+          // Problem here is we can have both SFTP and SSHError
+          if let err = error as? SSH.FileError {
+            XCTFail(err.description)
+          } else {
+            XCTFail("Crash")
+          }
+        }
+      }, receiveValue: { written in
+        totalWritten += written
+      })
+    
+    waitForExpectations(timeout: 15, handler: nil)
+    XCTAssert(totalWritten == 4 * 1024 * 1024, "Did not write all data")
+    
+    let statExpectation = self.expectation(description: "File Stat")
+    let cancelStat = root.walkTo("/tmp/newfile")
+      .flatMap { (t: Translator) -> AnyPublisher<FileAttributes, Error> in t.stat() }
+      .assertNoFailure()
+      .sink { (stats: FileAttributes) in
+        XCTAssertTrue(stats[.size] as! Int == 4 * 1024 * 1024)
+        statExpectation.fulfill()
+      }
+    
+    waitForExpectations(timeout: 15, handler: nil)
   }
   
   func testWriteToWriter() throws {
@@ -190,7 +239,7 @@ class SFTPTests: XCTestCase {
       }.flatMap() { f -> AnyPublisher<Int, Error> in
         let file = f as! SFTPFile
         return translator!.walkTo("/tmp/")
-          .flatMap { $0.create(name: "linux.tar.xz", flags: O_WRONLY, mode: S_IRWXU) }
+          .flatMap { $0.create(name: "linux.tar.xz", mode: S_IRWXU) }
           .flatMap() { file.writeTo($0) }.eraseToAnyPublisher()
       }.sink(receiveCompletion: { completion in
         switch completion {

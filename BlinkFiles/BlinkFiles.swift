@@ -62,7 +62,7 @@ public protocol Translator: CopierFrom {
   
   // Creates the file name at the current walked path with the given permissions.
   // Default mode  = S_IRWXU
-  func create(name: String, flags: Int32, mode: mode_t) -> AnyPublisher<File, Error>
+  func create(name: String, mode: mode_t) -> AnyPublisher<File, Error>
   // Creates the directory name at the current walked path with the given permissions.
   // Default mode =  S_IRWUX | S_IRWXG | S_IRWXO
   func mkdir(name: String, mode: mode_t) -> AnyPublisher<Translator, Error>

@@ -247,7 +247,7 @@ public class SFTPTranslator: BlinkFiles.Translator {
     }.eraseToAnyPublisher()
   }
   
-  public func create(name: String, flags: Int32, mode: mode_t = S_IRWXU) -> AnyPublisher<BlinkFiles.File, Error> {
+  public func create(name: String, mode: mode_t = S_IRWXU) -> AnyPublisher<BlinkFiles.File, Error> {
     if fileType != .typeDirectory {
       return .fail(error: FileError(title: "Not a directory.", in: session))
     }
@@ -257,7 +257,7 @@ public class SFTPTranslator: BlinkFiles.Translator {
       defer { ssh_channel_set_blocking(self.channel, 0) }
       
       let filePath = (self.path as NSString).appendingPathComponent(name)
-      guard let file = sftp_open(sftp, filePath, flags | O_CREAT, mode) else {
+      guard let file = sftp_open(sftp, filePath, O_WRONLY|O_CREAT|O_TRUNC, mode) else {
         throw FileError(in: self.session)
       }
       

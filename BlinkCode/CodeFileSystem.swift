@@ -164,7 +164,7 @@ class CodeFileSystem {
             if !(options.create ?? false) {
               return .fail(error: CodeFileSystemError.fileNotFound(uri: self.uri))
             }
-            return parentT.create(name: fileName, flags: O_WRONLY, mode: 0o644)
+            return parentT.create(name: fileName, mode: 0o644)
           }
         // 2. Write the content to the file
           .flatMap { file -> AnyPublisher<Int, Error> in
