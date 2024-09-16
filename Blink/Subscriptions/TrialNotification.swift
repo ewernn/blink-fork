@@ -56,15 +56,21 @@ extension TrialProgressNotification {
     let content = UNMutableNotificationContent()
     content.title = "Hope you are enjoying Blink."
 
-    var dateComponents = DateComponents()
+    var notifyAfterDays: Int
     switch self {
     case .OneWeek:
-      dateComponents.day = 5
+      notifyAfterDays = 5
       content.body = "Your trial will convert in 2 days."
     case .OneMonth:
-      dateComponents.day = 23
+      notifyAfterDays = 23
       content.body = "Your trial will convert in 7 days."
     }
+    
+    let targetDate = Calendar.current.date(byAdding: .day, value: notifyAfterDays, to: Date())!
+    var dateComponents = Calendar.current.dateComponents([.year, .month, .day], from: targetDate)
+    dateComponents.hour = 12
+    dateComponents.minute = 0
+
     let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents,
                                                 repeats: false)
 
@@ -78,17 +84,23 @@ extension TrialProgressNotification {
   private func scheduleTrialSupportRequestNotification() async throws {
     let content = UNMutableNotificationContent()
 
-    var dateComponents = DateComponents()
+    var notifyAfterDays: Int
     switch self {
     case .OneWeek:
-      dateComponents.day = 3
+      notifyAfterDays = 3
       content.title = "You are in day 3 of your trial..."
-      content.body = "And we are here to help setting things up. Type `config` on the shell and ask us!"
+      content.body = "And we are here to help setting things up. Type `config` on the shell and ask!"
     case .OneMonth:
-      dateComponents.day = 7
+      notifyAfterDays = 7
       content.title = "You are in day 7 of your trial..."
-      content.body = "And we are here to help setting things up. Type `config` on the shell and ask us!"
+      content.body = "And we are here to help setting things up. Type `config` on the shell and ask!"
     }
+    
+    let targetDate = Calendar.current.date(byAdding: .day, value: notifyAfterDays, to: Date())!
+    var dateComponents = Calendar.current.dateComponents([.year, .month, .day], from: targetDate)
+    dateComponents.hour = 12
+    dateComponents.minute = 0
+    
     let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents,
                                                 repeats: false)
 
@@ -97,6 +109,5 @@ extension TrialProgressNotification {
                                         trigger: trigger)
 
     try await unc.add(request)
-
   }
 }
