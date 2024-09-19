@@ -1116,6 +1116,7 @@ extension SpaceController {
 
     _spaceControllerAnimating = true
     _viewportsController.setViewControllers([term], direction: direction, animated: animated) { (didComplete) in
+      term.resumeIfNeeded()
       self._currentKey = term.meta.key
       self._displayHUD()
       self._attachInputToCurrentTerm()
