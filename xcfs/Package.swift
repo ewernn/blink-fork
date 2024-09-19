@@ -84,13 +84,13 @@ var binaryTargets: [PackageDescription.Target] = [
   ),
   (
     "vim",
-    "cfe23a176e932c52ce7cceb4e5ea135ef88d5b3bc7e3b92fa9aaa6e534cf253c",
-    "https://github.com/blinksh/vim/releases/download/v9.1.0187/vim.xcframework.zip"
+    "81fd7d57cb9cb9549db1f4514dbf93b3c0e67bd5ba8d07ae43735f7916ff8e88",
+    "https://github.com/blinksh/vim/releases/download/v9.1.0187%2Bblink-17.3.0/vim.xcframework.zip"
   ),
   (
     "xxd",
-    "808d0a6404f374bdc21d526856f57a17b1c036d30218f330a0348c9c871ab1fd",
-    "https://github.com/blinksh/vim/releases/download/v9.1.0187/xxd.xcframework.zip"
+    "eb8f86526fae0165b36c08d6eec05d87b48c742f624a3e13b9a885f357ab61e0",
+    "https://github.com/blinksh/vim/releases/download/v9.1.0187%2Bblink-17.3.0/xxd.xcframework.zip"
   )
 ].map { name, checksum, url in PackageDescription.Target.binaryTarget(name: name, url: url, checksum: checksum)}
 
