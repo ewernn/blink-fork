@@ -1,8 +1,8 @@
-////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
 //
 // B L I N K
 //
-// Copyright (C) 2016-2018 Blink Mobile Shell Project
+// Copyright (C) 2016-2024 Blink Mobile Shell Project
 //
 // This file is part of Blink.
 //
@@ -29,16 +29,10 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#import <UIKit/UIKit.h>
-#import "AppDelegate.h"
-#import <Foundation/Foundation.h>
-#import <Blink-Swift.h>
 
-#include "ios_patches.h"
+#ifndef ios_patch_h
+#define ios_patch_h
 
-int main(int argc, char * argv[]) {
-  @autoreleasepool {
-    __blink_ios_patches();
-    return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));
-  }
-}
+void __blink_ios_patches(void);
+
+#endif /* ios_patch_h */

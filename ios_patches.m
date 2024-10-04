@@ -1,8 +1,8 @@
-////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
 //
 // B L I N K
 //
-// Copyright (C) 2016-2018 Blink Mobile Shell Project
+// Copyright (C) 2016-2024 Blink Mobile Shell Project
 //
 // This file is part of Blink.
 //
@@ -29,16 +29,22 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#import <UIKit/UIKit.h>
-#import "AppDelegate.h"
-#import <Foundation/Foundation.h>
-#import <Blink-Swift.h>
 
+#import <Foundation/Foundation.h>
+#import <objc/runtime.h>
 #include "ios_patches.h"
 
-int main(int argc, char * argv[]) {
-  @autoreleasepool {
-    __blink_ios_patches();
-    return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));
-  }
+void __blink_ios_patches(void) {
+  // Check to class method of UIPressAndHoldPopoverController
+  // Opened Radar so this can be fixed or exposed.
+  // We won't implement a different fix because plan is to move away from Hterm.
+  // Also an issue on macOS: https://apple.stackexchange.com/questions/332769/macos-disable-popup-showing-accented-characters-when-holding-down-a-key
+  Class cls = NSClassFromString(@"UIPressAndHoldPopoverController");
+  
+  SEL selector = sel_getUid("canPresentPressAndHoldPopoverForEvent:");
+  Method method = class_getClassMethod(cls, selector);
+  IMP override = imp_implementationWithBlock(^BOOL(id me, void* arg0) {
+    return NO;
+  });
+  method_setImplementation(method, override);
 }
