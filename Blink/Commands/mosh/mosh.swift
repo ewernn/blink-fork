@@ -284,9 +284,11 @@ enum MoshError: Error, LocalizedError {
   private func getMoshServerStartupArgs(udpPort: String?,
                                  colors: String?,
                                  exec: String?) -> String {
-    let localeFallback = "LANG=\(String(cString: getenv("LANG")))"
-
-    var args = ["new", "-s", "-c", colors ?? "256", "-l", localeFallback]
+    var args = ["new", "-s", "-c", colors ?? "256"]
+    if let lang = getenv("LANG") {
+      let localeFallback = "LANG=\(String(cString: lang))"
+      args.append(contentsOf: ["-l", localeFallback])
+    }
 
     if let udpPort = udpPort {
       args.append(contentsOf: ["-p", udpPort])
@@ -516,7 +518,9 @@ enum MoshError: Error, LocalizedError {
   }
 
   @objc public override func sigwinch() {
-    pthread_kill(self.tid, SIGWINCH);
+    if let tid = self.tid {
+      pthread_kill(tid, SIGWINCH);
+    }
   }
 
   @objc public override func handleControl(_ control: String!) {
