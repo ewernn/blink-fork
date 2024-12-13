@@ -46,7 +46,11 @@ class CaptureController: UIViewController {
       UIKeyCommand.inputDownArrow,
       UIKeyCommand.inputLeftArrow,
       UIKeyCommand.inputRightArrow,
-      UIKeyCommand.inputEscape
+      UIKeyCommand.inputEscape,
+      UIKeyCommand.inputHome,
+      UIKeyCommand.inputEnd,
+      UIKeyCommand.inputPageUp,
+      UIKeyCommand.inputPageDown
     ]
     let modifiers: [UIKeyModifierFlags] = [.shift, .control, .alternate, .command]
     var mods: Set<Int> = [0]

@@ -76,6 +76,14 @@ class KeyShortcut: ObservableObject, Codable, Identifiable {
       res += KeyCode.up.symbol
     case UIKeyCommand.inputDownArrow:
       res += KeyCode.down.symbol
+    case UIKeyCommand.inputHome:
+      res += KeyCode.home.symbol
+    case UIKeyCommand.inputEnd:
+      res += KeyCode.end.symbol
+    case UIKeyCommand.inputPageUp:
+      res += KeyCode.pageUp.symbol
+    case UIKeyCommand.inputPageDown:
+      res += KeyCode.pageDown.symbol
     case UIKeyCommand.inputEscape:
       res += KeyCode.escape.symbol
     case " ":
