@@ -32,16 +32,32 @@
 import SwiftUI
 import UIKit
 
-class SettingsHostingController: NSObject {
-  private static func _createWith<T: View>(view: T, nav: UINavigationController?) -> UIViewController {
-    guard let nav = nav
-    else {
-      return UIHostingController(rootView: view)
+
+class SettingsHostingController: UIHostingController<NavView<SettingsView>>, UIAdaptivePresentationControllerDelegate {
+  private let onDismiss: (() -> Void)?
+
+  private init(navController: UINavigationController, onDismiss: (() -> Void)? = nil) {
+    self.onDismiss = onDismiss
+
+    let rootView = NavView(navController: navController) {
+      SettingsView()
     }
-    return UIHostingController(rootView: NavView(navController: nav)  { view } )
+
+    super.init(rootView: rootView)
+
+    navController.presentationController?.delegate = self
   }
-  
-  static func createSettings(nav: UINavigationController?) -> UIViewController {
-    _createWith(view: SettingsView(), nav: nav)
+
+  @MainActor @objc required dynamic init?(coder aDecoder: NSCoder) {
+    fatalError("init(coder:) has not been implemented")
+  }
+
+  // Delegate method called when the modal is dismissed
+  func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
+    onDismiss?()
+  }
+
+  static func createSettings(nav: UINavigationController, onDismiss: (() -> Void)? = nil) -> UIViewController {
+    return SettingsHostingController(navController: nav, onDismiss: onDismiss)
   }
 }

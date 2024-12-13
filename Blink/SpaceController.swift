@@ -925,9 +925,12 @@ extension SpaceController {
     }
     
     DispatchQueue.main.async {
+      _ = KBTracker.shared.input?.resignFirstResponder()
       let navCtrl = UINavigationController()
       navCtrl.navigationBar.prefersLargeTitles = true
-      let s = SettingsHostingController.createSettings(nav: navCtrl)
+      let s = SettingsHostingController.createSettings(nav: navCtrl, onDismiss: {
+        [weak self] in self?._focusOnShell()
+      })
       navCtrl.setViewControllers([s], animated: false)
       self.present(navCtrl, animated: true, completion: nil)
     }
@@ -1211,5 +1214,3 @@ extension SpaceController: SnippetContext {
   }
   
 }
-
-
