@@ -145,7 +145,6 @@ extension DispatchInputStream: WriterTo {
         guard let data = data else {
           return assertionFailure()
         }
-        
         let eof = done && data.count == 0
         guard !eof else {
           return pub.send(completion: .finished)

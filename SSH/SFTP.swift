@@ -102,7 +102,7 @@ public class SFTPTranslator: BlinkFiles.Translator {
   var rloop: RunLoop { sftpClient.rloop }
   var log: SSHLogger { get { sftpClient.log } }
 
-  var rootPath: String = ""
+  var rootPath: String? = nil
   var path: String = ""
   public var current: String { get { path }}
   public private(set) var fileType: FileAttributeType = .typeUnknown
@@ -113,11 +113,6 @@ public class SFTPTranslator: BlinkFiles.Translator {
   
   public init(on sftpClient: SFTPClient) throws {
     self.sftpClient = sftpClient
-    let (rootPath, fileType) = try self.canonicalize("")
-    
-    self.rootPath = rootPath
-    self.fileType = fileType
-    self.path = rootPath
   }
   
   init(from base: SFTPTranslator) {
@@ -131,7 +126,7 @@ public class SFTPTranslator: BlinkFiles.Translator {
     return .init(Just(sftp).subscribe(on: rloop).setFailureType(to: Error.self))
   }
   
-  func canonicalize(_ path: String) throws -> (String, FileAttributeType) {
+  private func canonicalize(_ path: String) throws -> (String, FileAttributeType) {
     ssh_channel_set_blocking(channel, 1)
     defer { ssh_channel_set_blocking(channel, 0) }
     
@@ -169,27 +164,34 @@ public class SFTPTranslator: BlinkFiles.Translator {
   
   // Resolve to an element in the hierarchy
   public func walkTo(_ path: String) -> AnyPublisher<Translator, Error> {
-    // All paths on SFTP, even Windows ones, must start with a slash (/c:/whatever/)
-    var absPath = path
-
-    // First cleanup the ~, and walk from rootPath
-    // ~ or /~ -> rootPath
-    // ./~ -> Can be a file or directory.
-    // foo/~/../bar/~/baz -> cleanup from rootPath
-    if absPath.last == "~" {
-      absPath = String(self.rootPath)
-    } else if let range = absPath.range(of: "~/", options: [.backwards]) {
-      absPath.removeSubrange(absPath.startIndex..<range.upperBound)
-      absPath = NSString(string: self.rootPath).appendingPathComponent(absPath)
-    }
-
-    // For a relative walk, append to current path.
-    if !absPath.starts(with: "/") {
-      // NSString performs a cleanup of the path as well.
-      absPath = NSString(string: self.path).appendingPathComponent(path)
-    }
-
     return connection().tryMap { sftp -> SFTPTranslator in
+      let rootPath = try self.rootPath ?? {
+          let (path, type) = try self.canonicalize("")
+          self.rootPath = path
+          self.fileType = type
+          return path
+      }()
+      
+      // All paths on SFTP, even Windows ones, must start with a slash (/c:/whatever/)
+      var absPath = path
+
+      // First cleanup the ~, and walk from rootPath
+      // ~ or /~ -> rootPath
+      // ./~ -> Can be a file or directory.
+      // foo/~/../bar/~/baz -> cleanup from rootPath
+      if absPath == "~" || absPath.hasSuffix("/~") {
+        absPath = String(rootPath)
+      } else if let range = absPath.range(of: "~/", options: [.backwards]) {
+        absPath.removeSubrange(absPath.startIndex..<range.upperBound)
+        absPath = NSString(string: rootPath).appendingPathComponent(absPath)
+      }
+
+      // For a relative walk, append to current path.
+      if !absPath.starts(with: "/") {
+        // NSString performs a cleanup of the path as well.
+        absPath = NSString(string: self.path).appendingPathComponent(path)
+      }
+      
       let (canonicalPath, type) = try self.canonicalize(absPath)
       
       self.path = canonicalPath
@@ -199,6 +201,34 @@ public class SFTPTranslator: BlinkFiles.Translator {
     }.eraseToAnyPublisher()
   }
   
+  public func join(_ path: String) throws -> Translator {
+    let rootPath = try self.rootPath ?? {
+      let (path, _) = try self.canonicalize("")
+      self.rootPath = path
+      return path
+    }()
+
+    var absPath = path
+
+    if absPath == "~" || absPath.hasSuffix("/~") {
+      absPath = String(rootPath)
+    } else if let range = absPath.range(of: "~/", options: [.backwards]) {
+      absPath.removeSubrange(absPath.startIndex..<range.upperBound)
+      absPath = NSString(string: rootPath).appendingPathComponent(absPath)
+    }
+
+    // For a relative walk, append to current path.
+    if !absPath.starts(with: "/") {
+      // NSString performs a cleanup of the path as well.
+      absPath = NSString(string: self.path).appendingPathComponent(path)
+    }
+
+    self.path = absPath
+    self.fileType = .typeUnknown
+
+    return self
+  }
+
   public func directoryFilesAndAttributes() -> AnyPublisher<[FileAttributes], Error> {
     if fileType != .typeDirectory {
       return .fail(error: FileError(title: "Not a directory.", in: session))

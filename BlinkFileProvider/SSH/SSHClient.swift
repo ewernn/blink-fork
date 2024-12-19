@@ -105,7 +105,7 @@ extension SSHClient {
         cancelProxy(nil)
         return
       }
-      
+
       let destination = proxyCommand.stdioForward
 
       proxyCancellable =
@@ -164,15 +164,122 @@ extension SSHClient {
   }
 }
 
+extension SSHClient {
+  static func dialInThread(_ host: String, withConfigProvider configProvider: @escaping SSHClientConfigProviderMethod) -> AnyPublisher<SSH.SSHClient, Error> {
+    let hostName: String
+    let config: SSHClientConfig
+    do {
+      (hostName, config) = try configProvider(host)
+    } catch {
+      return .fail(error: error)
+    }
+
+    var proxyCancellable: AnyCancellable?
+    var proxyStream: SSH.Stream? = nil
+    let execProxyCommand: SSHClient.ExecProxyCommandCallback = { (command, sockIn, sockOut) in
+      let output = DispatchOutputStream(stream: sockOut)
+      let input = DispatchInputStream(stream: sockIn)
+
+      let cancelProxy = { (error: Error?) in
+        // This is necessary in order to propagate when the streams close.
+        shutdown(sockIn, SHUT_RDWR)
+        shutdown(sockOut, SHUT_RDWR)
+
+        // Not necessary, but for cleanliness in order to track the actions when debugging.
+        // Otherwise, everything gets cleaned up once the whole session is detached.
+        proxyStream?.cancel()
+        proxyStream = nil
+      }
+
+      guard let proxyCommand = try? ProxyCommand(command) else {
+        print("Could not parse Proxy Command")
+        cancelProxy(nil)
+        return
+      }
+
+      let destination = proxyCommand.stdioForward
+
+      proxyCancellable =
+        SSH.SSHClient.dialInThread(proxyCommand.hostAlias, withConfigProvider: configProvider)
+          .flatMap { conn -> AnyPublisher<SSH.Stream, Error> in
+            // proxyConnectionControl = connControl
+            conn.handleSessionException = { error in
+              cancelProxy(error)
+            }
+            return conn.requestForward(to: destination.bindAddress,
+                                       port: Int32(destination.port),
+                                       from: "blinkJumpHost",
+                                       localPort: 22)
+          }
+          .sink(
+            receiveCompletion: { completion in
+              switch completion {
+                case .finished:
+                  break
+                case .failure(let error):
+                  print(error)
+              }
+              // Self-retain until it is done.
+              proxyCancellable = nil
+            },
+            receiveValue: { s in
+              proxyStream = s
+              s.connect(stdout: output, stdin: input)
+              // The proxyStream is self-retaining itself for cancellation.
+              s.handleFailure = { error in
+                cancelProxy(error)
+              }
+              s.handleCompletion = { cancelProxy(nil) }
+            }
+          )
+    }
+
+    let pb = PassthroughSubject<SSH.SSHClient, Error>()
+    var dial: AnyCancellable?
+
+    let t = Thread {
+      let runLoop = RunLoop.current
+
+      dial = SSH.SSHClient.dial(hostName, with: config, withProxy: execProxyCommand)
+        .print("SSHClient dialInThread")
+        .mapError { error in
+          if let sshError = error as? SSHError, case .authFailed = sshError {
+            return NSFileProviderError(.notAuthenticated, userInfo: [NSLocalizedFailureReasonErrorKey: sshError.description])
+          } else {
+            return NSFileProviderError(.serverUnreachable, userInfo: [NSLocalizedFailureReasonErrorKey: error.localizedDescription])
+          }
+        }
+        .sink(
+          receiveCompletion: { completion in
+            pb.send(completion: completion)
+          },
+          receiveValue: { conn in
+            pb.send(conn)
+          })
+
+      SSH.SSHClient.run(withTimer: true)
+      print("SSHClient dialInThread Out")
+    }
+
+    return Just(t)
+      .flatMap { t in
+        t.start()
+        return pb
+      }.buffer(size: 1, prefetch: .byRequest, whenFull: .dropOldest)
+      .eraseToAnyPublisher()
+  }
+}
+
+
 fileprivate struct ProxyCommand {
   struct Error: Swift.Error {
     let description: String
   }
-  
+
   let jumpHost: String?
   let stdioForward: BindAddressInfo
   let hostAlias: String
-  
+
   // The command we receive is pre-fabricated by LibSSH, so we capture
   // looped JumpHosts, StdioForward and HostAlias in that order.
   // ssh -J l,l -W [127.0.0.1]:22 l
@@ -188,23 +295,71 @@ fileprivate struct ProxyCommand {
     else {
       throw Error(description: "Invalid ProxyCommand \(command)")
     }
-    
+
     if let r = Range(match.range(withName: "JumpHost"), in: command) {
       self.jumpHost = String(command[r])
     } else {
       self.jumpHost = nil
     }
-    
+
     if let r = Range(match.range(withName: "StdioForward"), in: command) {
       self.stdioForward = try BindAddressInfo(String(command[r]))
     } else {
       throw Error(description: "Missing forward. \(command)")
     }
-    
+
     if let r = Range(match.range(withName: "HostAlias"), in: command) {
       self.hostAlias = String(command[r])
     } else {
       throw Error(description: "Missing forward. \(command)")
     }
+  }
+}
+
+var logCancellables = Set<AnyCancellable>()
+
+enum SSHClientConfigProvider {
+
+  static func config(host title: String) throws -> (String, SSHClientConfig) {
+
+    // NOTE This is just regular config initialization. Usually happens on AppDelegate, but the
+    // FileProvider doesn't get another chance.
+    BKHosts.loadHosts()
+    BKPubKey.loadIDS()
+
+    let bkConfig = try BKConfig()
+    let agent = SSHAgent()
+    let consts: [SSHAgentConstraint] = [SSHConstraintTrustedConnectionOnly()]
+
+    let host = try bkConfig.bkSSHHost(title)
+
+    if let signers = bkConfig.signer(forHost: host) {
+      signers.forEach { (signer, name) in
+        agent.loadKey(signer, aka: name, constraints: consts)
+      }
+    } else {
+      for (signer, name) in bkConfig.defaultSigners() {
+        agent.loadKey(signer, aka: name, constraints: consts)
+      }
+    }
+
+    var availableAuthMethods: [AuthMethod] = [AuthAgent(agent)]
+    if let password = host.password, !password.isEmpty {
+      availableAuthMethods.append(AuthPassword(with: password))
+    }
+
+    let log = BlinkLogger("SSH")
+    let logger = PassthroughSubject<String, Never>()
+    logger.sink {
+      log.send($0)
+
+    }.store(in: &logCancellables)
+
+
+    return (host.hostName ?? title,
+            host.sshClientConfig(authMethods: availableAuthMethods,
+                                 agent: agent,
+                                 logger: logger)
+    )
   }
 }

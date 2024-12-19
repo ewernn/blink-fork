@@ -83,21 +83,18 @@ class SSHPool {
           receiveCompletion: { completion in
             pb.send(completion: completion)
           },
-          receiveValue: { conn in
+          receiveValue: { [weak self] conn in
             let control = SSHClientControl(for: conn, on: host, with: config, running: runLoop, exposed: exposed)
-            self.queue.sync {
+            self?.queue.sync {
               SSHPool.shared.controls.append(control)
             }
             pb.send(conn)
           })
 
       // NOTE Before we let the Pool control the RunLoop, and the problem is that SSHClient needs to be in full control
-      // of the RunLoop as it may have multiple nested runs internally. When run this way, the SSHClient will continue until
-      // fully disposed.
+      // as it may have multiple nested runs internally. Using SSHClient.run, the SSHClient will continue until the object itself is fully disposed.
       SSH.SSHClient.run()
-      if let ctrl = SSHPool.shared.control(for: host, with: config) {
-        SSHPool.shared.removeControl(ctrl)
-      }
+
       print("Pool Thread out")
     }
 
@@ -152,6 +149,7 @@ extension SSHPool {
     // NOTE This is a workaround
     c.streams.forEach { (_, s) in s.cancel() }
     c.streams = []
+    shared.enforcePersistance(c)
   }
 }
 

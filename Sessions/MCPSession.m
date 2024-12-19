@@ -210,6 +210,8 @@
       self.device.autoCR = TRUE;
     }
     [self setActiveSession];
+    [self updateAllowedPaths];
+
     _currentCmd = cmdline;
 
     _cmdStream = [_device.stream duplicate];
@@ -272,7 +274,38 @@
 
 - (void)updateAllowedPaths
 {
-  NSArray<NSString *>* allowedPaths = [BlinkPaths cleanedSymlinksInHomeDirectory];
+  NSFileManager *fm = [NSFileManager defaultManager];
+  NSMutableArray<NSString *> *allowedPaths = [[NSMutableArray alloc] init];
+  NSString *documentsPath = [BlinkPaths documentsPath];
+  NSString *iCloudDriveDocumentsPath = [BlinkPaths iCloudDriveDocuments];
+
+  if (documentsPath != NULL) {
+    [allowedPaths addObject: documentsPath];
+    NSString *resolvedPath = [fm destinationOfSymbolicLinkAtPath:[BlinkPaths documentsPath] error:nil];
+    if (resolvedPath != NULL) {
+      [allowedPaths addObject: resolvedPath];
+    }
+  }
+
+  if (iCloudDriveDocumentsPath != NULL) {
+    [allowedPaths addObject: iCloudDriveDocumentsPath];
+    NSString *resolvedPath = [fm destinationOfSymbolicLinkAtPath:[BlinkPaths iCloudDriveDocuments] error:nil];
+    if (resolvedPath != NULL) {
+      [allowedPaths addObject: iCloudDriveDocumentsPath];
+    }
+  }
+
+  NSArray<NSString *> *allowedLocations = [[BookmarkedLocationsManager default] getLocationPaths];
+  for (NSString *path in allowedLocations) {
+    char resolvedPath[PATH_MAX];
+    if (realpath([path fileSystemRepresentation], resolvedPath)) {
+      NSString *stringResolvingPath = [NSString stringWithUTF8String:resolvedPath];
+      [allowedPaths addObject: stringResolvingPath];
+    } else {
+      [allowedPaths addObject:path];
+    }
+  }
+  
   ios_setAllowedPaths(allowedPaths);
 }
 

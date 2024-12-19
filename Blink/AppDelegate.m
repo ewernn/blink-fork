@@ -83,7 +83,6 @@ void __setupProcessEnv(void) {
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
   
   [Migrator perform];
-  [BlinkPaths cleanedSymlinksInHomeDirectory];
 
   [AppDelegate reloadDefaults];
   [[UIView appearance] setTintColor:[UIColor blinkTint]];
@@ -130,7 +129,6 @@ void __setupProcessEnv(void) {
 //  [nc addObserver:self selector:@selector(_active) name:@"UIApplicationSystemNavigationActionChangedNotification" object:nil];
 
   [UIApplication sharedApplication].applicationSupportsShakeToEdit = NO;
-  
   
   [_NSFileProviderManager syncWithBKHosts];
   

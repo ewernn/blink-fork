@@ -165,7 +165,7 @@ public func blink_ssh_main(argc: Int32, argv: Argv) -> Int32 {
             return
           }
           self._mcp.setActiveSession()
-          self.executeProxyCommand(command: $0, sockIn: $1, sockOut: $2)
+          Self.executeProxyCommand(command: $0, sockIn: $1, sockOut: $2)
         })
     }
     
@@ -256,14 +256,14 @@ public func blink_ssh_main(argc: Int32, argv: Argv) -> Int32 {
       forwardTunnels.forEach { SSHPool.deregister(localForward:  $0, on: conn) }
       remoteTunnels.forEach  { SSHPool.deregister(remoteForward: $0, on: conn) }
       socks.forEach { SSHPool.deregister(socksBindAddress: $0, on: conn) }
-    } else {
-      connectionCancellable = nil
     }
     
+    connectionCancellable = nil
+    self.connection = nil
     return exitCode
   }
 
-  private func executeProxyCommand(command: String, sockIn: Int32, sockOut: Int32) {
+  static func executeProxyCommand(command: String, sockIn: Int32, sockOut: Int32) {
     /* Prepare /dev/null socket for the stderr redirection */
     let devnull = open("/dev/null", O_WRONLY);
     if devnull == -1 {
@@ -347,7 +347,7 @@ public func blink_ssh_main(argc: Int32, argv: Argv) -> Int32 {
     guard let tunnel = command.stdioHostAndPort else {
       return .just(conn)
     }
-    
+
     return conn.requestForward(to: tunnel.bindAddress, port: Int32(tunnel.port),
                           // Just informative.
                           from: "stdio", localPort: 22)
@@ -357,16 +357,16 @@ public func blink_ssh_main(argc: Int32, argv: Argv) -> Int32 {
         let inStream = DispatchInputStream(stream: dup(self.instream))
         s.connect(stdout: outStream, stdin: inStream)
 
-        s.handleCompletion = {
+        s.handleCompletion = { [weak self] in
           print("Stdio Tunnel completed")
           SSHPool.deregister(allTunnelsForConnection: conn)
-          self.kill()
+          self?.kill()
           //SSHPool.deregister(runningCommand: command, on: conn)
         }
-        s.handleFailure = { error in
+        s.handleFailure = { [weak self] error in
           print("Stdio Tunnel completed")
           SSHPool.deregister(allTunnelsForConnection: conn)
-          self.kill()
+          self?.kill()
           //SSHPool.deregister(runningCommand: command, on: conn)
         }
         

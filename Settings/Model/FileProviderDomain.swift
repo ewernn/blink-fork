@@ -47,11 +47,11 @@ class _NSFileProviderDomain {
   let identifier: _NSFileProviderDomainIdentifier
   let displayName: String
   let pathRelativeToDocumentStorage: String
-  
-  init(identifier: _NSFileProviderDomainIdentifier, displayName: String, pathRelativeToDocumentStorage: String) {
+
+  init(identifier: _NSFileProviderDomainIdentifier, displayName: String) {
     self.identifier = identifier
     self.displayName = displayName
-    self.pathRelativeToDocumentStorage = pathRelativeToDocumentStorage
+    //self.pathRelativeToDocumentStorage = pathRelativeToDocumentStorage
   }
 }
 
@@ -59,11 +59,11 @@ class _NSFileProviderDomain {
   static func add(_ domain: _NSFileProviderDomain, callback: @escaping (NSError?) -> ()) {
     callback(nil)
   }
-  
+
   static func remove(_ domain: _NSFileProviderDomain, callback: @escaping (NSError?) -> ()) {
     callback(nil)
   }
-  
+
   static func getDomainsWithCompletionHandler(_ callback: @escaping ([_NSFileProviderDomain], NSError?) -> ()) {
     callback([], nil)
   }
@@ -73,7 +73,7 @@ class _NSFileProviderDomain {
 
 public typealias _NSFileProviderDomain = NSFileProviderDomain
 @objc class _NSFileProviderManager: NSFileProviderManager {
-  
+
 }
 public typealias _NSFileProviderDomainIdentifier = NSFileProviderDomainIdentifier
 
@@ -87,33 +87,55 @@ class FileProviderDomain: Identifiable, Codable, Equatable {
       lhs.remotePath == rhs.remotePath &&
       lhs.proto == rhs.proto
   }
-  
+
   var id: UUID
   var displayName: String
   var remotePath: String
   var proto: String
+  // ReplicatedExtension is the only available extension since 18.1.0, but we leave the other in case
+  // the Migrator fails and the provider falls behind, the user can still change it.
+  var useReplicatedExtension: Bool = true
   // Alias is not part of the domain as we don't want to serialize it under the host itself.
-
-  init(id: UUID, displayName: String, remotePath: String, proto: String) {
+  
+  init(id: UUID, displayName: String, remotePath: String, proto: String, useReplicatedExtension: Bool) {
     self.id = id
     self.displayName = displayName
     self.remotePath = remotePath
     self.proto = proto
+    self.useReplicatedExtension = useReplicatedExtension
   }
-  
-  
+
   func nsFileProviderDomain(alias: String) -> _NSFileProviderDomain? {
-    _NSFileProviderDomain(
-      identifier: _NSFileProviderDomainIdentifier(rawValue: id.uuidString),
-      displayName: displayName,
-      pathRelativeToDocumentStorage: encodedPathFor(alias: alias) ?? ""
-    )
+    if useReplicatedExtension {
+      guard let identifier = _replicatedExtensionIdentifierFor(alias: alias) else {
+        return nil
+      }
+      return _NSFileProviderDomain(
+        identifier: identifier,
+        displayName: displayName
+      )
+    } else {
+      // Since 18.1.0, this is just a fallthrough. Do not return the old FPE extension.
+      return nil
+    }
   }
-  
+
+  func connectionPathFor(alias: String) -> String {
+    "\(proto):\(alias):\(remotePath)"
+  }
+
   func encodedPathFor(alias: String) -> String? {
-    "\(proto):\(alias):\(remotePath)".data(using: .utf8)?.base64EncodedString() ?? ""
+    "\(connectionPathFor(alias: alias))".data(using: .utf8)?.base64EncodedString() ?? ""
   }
-  
+
+  func _replicatedExtensionIdentifierFor(alias: String) -> _NSFileProviderDomainIdentifier? {
+    let id = self.id.uuidString.prefix(8)
+    guard let encodedPath = "\(proto):\(alias):\(remotePath)".data(using: .utf8)?.base64EncodedString() else {
+      return nil
+    }
+    return _NSFileProviderDomainIdentifier(rawValue: "\(id)-\(encodedPath)")
+  }
+
   static func listFrom(jsonString: String?) -> [FileProviderDomain] {
     guard
       let str = jsonString,
@@ -123,15 +145,15 @@ class FileProviderDomain: Identifiable, Codable, Equatable {
     else {
       return []
     }
-    
+
     return arr
   }
-  
+
   static func toJson(list: [FileProviderDomain]) -> String {
     guard !list.isEmpty else {
       return ""
     }
-    
+
     let data = try? JSONEncoder().encode(list)
     guard
       let data = data,
@@ -139,26 +161,28 @@ class FileProviderDomain: Identifiable, Codable, Equatable {
     else {
       return ""
     }
-    
+
     return str
   }
-  
-  static func _syncDomainsForAllHosts(nsDomains: [_NSFileProviderDomain]) {
+
+  static func _syncDomainsForAllHosts(installedDomains: [_NSFileProviderDomain]) {
     var domainsMap = [String : (alias: String, domain: FileProviderDomain)]()
     var hostsMap = [String : BKHosts]()
     var keysMap = [String : BKPubKey]()
-    
+
     for host in BKHosts.allHosts() {
       guard let json = host.fpDomainsJSON, !json.isEmpty
       else {
         continue
       }
-      
+
       let domains = FileProviderDomain.listFrom(jsonString: json)
       for domain in domains {
-        domainsMap[domain.id.uuidString] = (alias: host.host, domain: domain)
+        // Use prefix so we can map both replicated and regular domains.
+        let subId = String(domain.id.uuidString.prefix(8))
+        domainsMap[subId] = (alias: host.host, domain: domain)
       }
-      
+
       if hostsMap[host.host] == nil {
         hostsMap[host.host] = host
         if let key = host.key, !key.isEmpty, key != "None", let sshKey = BKPubKey.withID(key) {
@@ -168,35 +192,40 @@ class FileProviderDomain: Identifiable, Codable, Equatable {
     }
 
     var domainsToRemove: [_NSFileProviderDomain] = []
-    for d in nsDomains {
-      if let blinkDomain = domainsMap.removeValue(forKey: d.identifier.rawValue) {
-        if blinkDomain.domain.displayName != d.displayName ||
-           blinkDomain.domain.encodedPathFor(alias: blinkDomain.alias) != d.pathRelativeToDocumentStorage {
+    for d in installedDomains {
+      let subId = String(d.identifier.rawValue.prefix(8))
+      if let blinkDomain = domainsMap.removeValue(forKey: subId) {
+        if !d.isReplicated || // Transition from old to new FPE
+            blinkDomain.domain.displayName != d.displayName ||
+            blinkDomain.domain._replicatedExtensionIdentifierFor(alias: blinkDomain.alias)?.rawValue != d.identifier.rawValue {
           domainsToRemove.append(d)
-          domainsMap[d.identifier.rawValue] = blinkDomain
+          domainsMap[subId] = blinkDomain
         }
-      } else {
+      }
+      else {
         domainsToRemove.append(d)
       }
     }
-    
+
     for nsDomain in domainsToRemove {
       _NSFileProviderManager.remove(nsDomain) { err in
-        _NSFileProviderManager.clearFileProviderCache(nsDomain)
         if let err = err {
           print("failed to remove domain", err)
+        } else if nsDomain.isReplicated {
+          let reference = String(nsDomain.identifier.rawValue.prefix(8))
+          _NSFileProviderManager.clearFileProviderReplicatedWorkingSet(for: reference)
         }
       }
     }
-    
+
     for (_, value) in domainsMap {
       if let domain = value.domain.nsFileProviderDomain(alias: value.alias) {
         _NSFileProviderManager.add(domain) { err in
           if let err = err {
             print("failed to add domain", err)
+            return
           }
         }
-        _NSFileProviderManager.excludeDomainFromBackup(domain)
       }
     }
   }
@@ -209,34 +238,12 @@ extension _NSFileProviderManager {
         print("get domains error", err!)
         return
       }
-      FileProviderDomain._syncDomainsForAllHosts(nsDomains: nsDomains)
+      FileProviderDomain._syncDomainsForAllHosts(installedDomains: nsDomains)
     }
   }
-  
-  static func clearFileProviderCache(_ nsDomain: _NSFileProviderDomain) {
-    #if targetEnvironment(macCatalyst)
-    #else
-    let path = Self.default.documentStorageURL.appendingPathComponent(nsDomain.pathRelativeToDocumentStorage)
-    try! FileManager.default.removeItem(at: path)
-    #endif
-  }
-  
-  static func excludeDomainFromBackup(_ nsDomain: _NSFileProviderDomain) {
-    #if targetEnvironment(macCatalyst)
-    #else
-    var path = Self.default.documentStorageURL.appendingPathComponent(nsDomain.pathRelativeToDocumentStorage)
-    var resource = URLResourceValues()
-    resource.isExcludedFromBackup = true
-    do {
-      try FileManager.default.createDirectory(
-        at: path,
-        withIntermediateDirectories: true,
-        attributes: nil
-      )
-      try path.setResourceValues(resource)
-    } catch {
-      print("Could not exclude from iCloud backup \(path) - \(error)")
-    }
-    #endif
+
+  static func clearFileProviderReplicatedWorkingSet(for reference: String) {
+    let path = BlinkPaths.fileProviderReplicatedURL().appendingPathComponent("\(reference).db")
+    try? FileManager.default.removeItem(at: path)
   }
 }

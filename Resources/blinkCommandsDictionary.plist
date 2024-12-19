@@ -142,13 +142,6 @@
 		<string></string>
 		<string>file</string>
 	</array>
-	<key>link-files</key>
-	<array>
-		<string>MAIN</string>
-		<string>link_files_main</string>
-		<string></string>
-		<string>no</string>
-	</array>
 	<key>udptunnel</key>
 	<array>
 		<string>MAIN</string>

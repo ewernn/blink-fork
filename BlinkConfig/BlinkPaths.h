@@ -34,6 +34,7 @@
 @interface BlinkPaths : NSObject
 
 + (NSString *) homePath;
++ (NSURL *)homeURL;
 
 + (NSString *) groupContainerPath;
 + (NSString *) documentsPath;
@@ -72,13 +73,13 @@
 + (NSURL *) localSnippetsLocationURL;
 + (NSURL *) iCloudSnippetsLocationURL;
 
++ (NSURL *)fileProviderReplicatedURL;
++ (NSURL *)fileProviderRemotesURLWithRecreate:(BOOL)recreate;
+
 + (NSURL *)fileProviderErrorLogURL;
 + (NSURL *)blinkCodeErrorLogURL;
 
 + (void)linkICloudDriveIfNeeded;
 + (void)linkDocumentsIfNeeded;
-
-+ (NSArray<NSString *> *)cleanedSymlinksInHomeDirectory;
-
 
 @end

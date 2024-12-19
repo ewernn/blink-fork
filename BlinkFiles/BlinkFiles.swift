@@ -41,6 +41,7 @@ public typealias BlinkFilesAttributeKey = FileAttributeKey
 // to work while still respecting the proper interface everywhere.
 public extension BlinkFilesAttributeKey {
   static let name: FileAttributeKey = FileAttributeKey("fileName")
+  static let symbolicLinkTargetInfo: FileAttributeKey = FileAttributeKey("symbolicLinkTargetInfo")
 }
 
 public typealias FileAttributes = [BlinkFilesAttributeKey: Any]
@@ -56,6 +57,9 @@ public protocol Translator: CopierFrom {
   // The walk offers a way to traverse the remote filesystem, without dealing with internal formats.
   // It is responsible to extend paths and define objects along the way.
   func walkTo(_ path: String) -> AnyPublisher<Translator, Error>
+
+  // Join merges the path without resolving it.
+  func join(_ path: String) throws -> Translator
   
   // Equivalent to a directory read, it returns all the elements and attrs from stating the containing objects
   func directoryFilesAndAttributes() -> AnyPublisher<[FileAttributes], Error>
@@ -64,7 +68,7 @@ public protocol Translator: CopierFrom {
   // Default mode  = S_IRWXU
   func create(name: String, mode: mode_t) -> AnyPublisher<File, Error>
   // Creates the directory name at the current walked path with the given permissions.
-  // Default mode =  S_IRWUX | S_IRWXG | S_IRWXO
+  // Default mode =  S_IRWXU | S_IRWXG | S_IRWXO
   func mkdir(name: String, mode: mode_t) -> AnyPublisher<Translator, Error>
   
   // Opens a Stream to the object

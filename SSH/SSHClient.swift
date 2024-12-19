@@ -874,7 +874,13 @@ public class SSHClient {
     }
   }
   
-  public static func run() {
+  public static func run(withTimer: Bool = false) {
+    if withTimer {
+      let timer = Timer(timeInterval: TimeInterval(1), repeats: true) { _ in
+        //print("timer")
+      }
+      RunLoop.current.add(timer, forMode: .default)
+    }
     CFRunLoopRunInMode(.defaultMode, TimeInterval(INT_MAX), false)
   }
   

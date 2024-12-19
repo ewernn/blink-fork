@@ -300,6 +300,19 @@ sshConfigAttachment:(NSString *)sshConfigAttachment
   return bkHost;
 }
 
+// Helper to replace a Host, but won't process changes like passwords, etc...
++ (void)_replaceHost:(BKHosts *)newHost
+{
+  for (int i = 0; i < __hosts.count; i++) {
+    BKHosts *host = __hosts[i];
+    if ([host->_host isEqualToString:newHost->_host]) {
+      __hosts[i] = newHost;
+      [self updateHost:host.host withiCloudId: host.iCloudRecordId andLastModifiedTime:[NSDate now]];
+      return;
+    }
+  }
+}
+
 + (void)updateHost:(NSString *)host withiCloudId:(CKRecordID *)iCloudId andLastModifiedTime:(NSDate *)lastModifiedTime
 {
   BKHosts *bkHost = [BKHosts withHost:host];

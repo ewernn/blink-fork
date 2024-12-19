@@ -110,6 +110,17 @@ public class Local : Translator {
     }.eraseToAnyPublisher()
   }
 
+  public func join(_ path: String) throws -> Translator {
+    var absPath = (path as NSString).standardizingPath
+    if !path.starts(with: "/") {
+      absPath = (current as NSString).appendingPathComponent(absPath)
+    }
+    self.fileType = .typeUnknown
+    self.current = absPath
+
+    return self
+  }
+
   func fileAttributes(atPath path: String) -> AnyPublisher<FileAttributes, Error> {
     return fileManager().tryMap { fm -> FileAttributes in
       let nsPath = (path as NSString)

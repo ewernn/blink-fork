@@ -16,8 +16,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "9827124F262E4BDB00F883FA"
-               BuildableName = "BlinkFileProvider.appex"
-               BlueprintName = "BlinkFileProvider"
+               BuildableName = "BlinkFileProviderExtension.appex"
+               BlueprintName = "BlinkFileProviderExtension"
                ReferencedContainer = "container:Blink.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -51,6 +51,17 @@
                BlueprintIdentifier = "D22277D42A26115300D4C708"
                BuildableName = "BlinkSnippetsTests.xctest"
                BlueprintName = "BlinkSnippetsTests"
+               ReferencedContainer = "container:Blink.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "BD9513E92B4F5A7A00A7BEBE"
+               BuildableName = "BlinkFileProviderTests.xctest"
+               BlueprintName = "BlinkFileProviderTests"
                ReferencedContainer = "container:Blink.xcodeproj">
             </BuildableReference>
          </TestableReference>

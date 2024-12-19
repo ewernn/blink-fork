@@ -91,7 +91,20 @@ extension Translator {
       copyElement(from: t, args: args)
     }.eraseToAnyPublisher()
   }
-  
+
+  public func copy(from t: Translator, newName: String, args: CopyArguments = CopyArguments()) -> CopyProgressInfoPublisher {
+    print("Copying as \(newName)")
+    return self.cloneWalkTo(newName)
+      .tryCatch { _ -> AnyPublisher<Translator, Error> in
+        return self.create(name: newName, mode: S_IRWXU)
+          .flatMap { $0.close() }
+          .flatMap { _ in self.cloneWalkTo(newName) }
+          .eraseToAnyPublisher()
+      }
+      .flatMap { $0.copyElement(from: t, args: args) }
+      .eraseToAnyPublisher()
+  }
+
   // Self can be a File or a directory.
   fileprivate func copyElement(from t: Translator, args: CopyArguments) -> CopyProgressInfoPublisher {
     return Just(t)

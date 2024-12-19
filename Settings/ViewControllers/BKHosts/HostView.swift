@@ -29,24 +29,62 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-import SwiftUI
 import CloudKit
+import Combine
+import SwiftUI
+
+import BlinkFileProvider
 
 struct FileDomainView: View {
   @EnvironmentObject private var _nav: Nav
   var domain: FileProviderDomain
-  var alias: String
+  var hostAlias: String
   let refreshList: () -> ()
+  let saveHost: () -> ()
   @State private var _displayName: String = ""
   @State private var _remotePath: String = ""
   @State private var _loaded = false
   @State private var _errorMessage = ""
-  
+
+  @State private var showValidateConnectionProgress = false
+  @State private var validateConnectionCompletion: Subscribers.Completion<ValidationError>? = nil
+  @State private var validateConnectionCancellable: AnyCancellable? = nil
+
   var body: some View {
     List {
       Section {
         Field("Name", $_displayName, next: "Path", placeholder: "Required")
         Field("Path", $_remotePath,  next: "",     placeholder: "root folder on the remote")
+      }
+      Section(footer: Text("Validating the connection will save all changes made.")) {
+        Button("Validate Connection", action: {
+          _testConnection()
+        })
+          .alert(isPresented: $showValidateConnectionProgress) {
+            if let completion = validateConnectionCompletion {
+              switch completion {
+              case .finished:
+                return Alert(
+                  title: Text("Validating Connection Succeded"),
+                  message: Text("Connection tested successfully."),
+                  dismissButton: .default(Text("Dismiss"))
+                )
+              case .failure(let error):
+                return Alert(
+                  title: Text("Validating Connection Failed"),
+                  message: Text(error.localizedDescription),
+                  dismissButton: .default(Text("Dismiss"))
+                )
+              }
+            } else {
+              return Alert(
+                title: Text("Validating Connection"),
+                message: Text("Connecting to remote..."),
+                // message: Text(validateConnectionProgressMessage),
+                dismissButton: .cancel(Text("Cancel"), action: { self.validateConnectionCancellable = nil })
+              )
+            }
+          }
       }
       // Disabled for now. Although the cached can be erased, the cache in memory will still remain and that
       // will mess with state. Deleting the domain itself is the way to go.
@@ -63,14 +101,8 @@ struct FileDomainView: View {
     .navigationBarItems(
       trailing: Group {
         Button("Update", action: {
-          do  {
-            try _validate()
-          } catch {
-            _errorMessage = error.localizedDescription
-            return
-          }
-          domain.displayName = _displayName.trimmingCharacters(in: .whitespacesAndNewlines)
-          domain.remotePath = _remotePath.trimmingCharacters(in: .whitespacesAndNewlines)
+          guard _validate() else { return }
+          _updateDomain()
           refreshList()
           _nav.navController.popViewController(animated: true)
         }
@@ -86,15 +118,57 @@ struct FileDomainView: View {
     }
     .alert(errorMessage: $_errorMessage)
   }
-  
-  private func _validate() throws {
+
+  private func _updateDomain() {
+    domain.displayName = _displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+    domain.remotePath = _remotePath.trimmingCharacters(in: .whitespacesAndNewlines)
+    domain.useReplicatedExtension = true
+  }
+
+  private func _validate() -> Bool {
     let cleanDisplayName = _displayName.trimmingCharacters(in: .whitespacesAndNewlines)
-    
-    if cleanDisplayName.isEmpty {
-      throw FormValidationError.general(message: "Name is required", field: "Name")
+
+    do {
+      if cleanDisplayName.isEmpty {
+        throw ValidationError.general(message: "Name is required", field: "Name")
+      }
+      return true
+    } catch {
+      _errorMessage = error.localizedDescription
+      return false
     }
   }
-  
+
+  private func _testConnection() {
+    guard _validate() else { return }
+    _updateDomain()
+    saveHost()
+
+    let providerPath: BlinkFileProviderPath
+    do {
+      providerPath = try BlinkFileProviderPath(domain.connectionPathFor(alias: hostAlias))
+    } catch {
+      _errorMessage = "Could not resolve domain path."
+      return
+    }
+
+    let conn = FilesTranslatorConnection(providerPath: providerPath,
+                                         configurator: BlinkConfigFactoryConfiguration())
+    self.validateConnectionCancellable = nil
+    self.validateConnectionCompletion = nil
+    // self.isValidatingConnection = true
+    self.showValidateConnectionProgress = true
+
+    self.validateConnectionCancellable = conn.rootTranslator
+      .mapError { error in ValidationError.connection(message: "Connection error: \(error)") }
+      .sink(
+        receiveCompletion: {
+          self.validateConnectionCompletion = $0
+          //self.showValidateConnectionProgress = false
+        },
+        receiveValue: { _ in }
+      )
+  }
 //  private func _eraseCache() {
 //    if let nsDomain = domain.nsFileProviderDomain(alias: alias) {
 //      _NSFileProviderManager.clearFileProviderCache(nsDomain)
@@ -106,18 +180,27 @@ fileprivate struct FileDomainRow: View {
   let domain: FileProviderDomain
   let alias: String
   let refreshList: () -> ()
-  
+  let saveHost: () -> ()
+
   var body: some View {
     Row(
       content: {
         HStack {
+          if !domain.useReplicatedExtension {
+            Text("DEPRECATED")
+              .font(.footnote)
+              .padding(6)
+              .background(Color.red.opacity(0.3))
+              .cornerRadius(8)
+              .frame(maxHeight: .infinity)
+          }
           Text(domain.displayName)
           Spacer()
           Text(domain.remotePath).font(.system(.subheadline))
         }
       },
       details: {
-        FileDomainView(domain: domain, alias: alias, refreshList: refreshList)
+        FileDomainView(domain: domain, hostAlias: alias, refreshList: refreshList, saveHost: saveHost)
       }
     )
   }
@@ -126,7 +209,7 @@ fileprivate struct FileDomainRow: View {
 struct FormLabel: View {
   let text: String
   var minWidth: CGFloat = 86
-  
+
   var body: some View {
     Text(text).frame(minWidth: minWidth, alignment: .leading)
   }
@@ -141,7 +224,7 @@ struct Field: View {
   private let _secureTextEntry: Bool
   private let _enabled: Bool
   private let _kbType: UIKeyboardType
-  
+
   init(_ label: String, _ value: Binding<String>, next: String, placeholder: String, id: String? = nil, secureTextEntry: Bool = false, enabled: Bool = true, kbType: UIKeyboardType = .default) {
     _id = id ?? label
     _label = label
@@ -152,7 +235,7 @@ struct Field: View {
     _enabled = enabled
     _kbType = kbType
   }
-  
+
   var body: some View {
     HStack {
       FormLabel(text: _label)
@@ -206,7 +289,7 @@ fileprivate struct FieldMoshCustomOptions: View {
   @Binding var overwrite: Bool
   @Binding var experimentalIP: BKMoshExperimentalIP
   var enabled: Bool
-  
+
   var body: some View {
     Row(
       content: {
@@ -274,13 +357,13 @@ struct FieldTextArea: View {
   private let _label: String
   @Binding private var value: String
   private let _enabled: Bool
-  
+
   init(_ label: String, _ value: Binding<String>, enabled: Bool = true) {
     _label = label
     _value = value
     _enabled = enabled
   }
-  
+
   var body: some View {
     Row(
       content: { FormLabel(text: _label) },
@@ -305,7 +388,7 @@ struct FieldTextArea: View {
 
 struct HostView: View {
   @EnvironmentObject private var _nav: Nav
-  
+
   @State private var _host: BKHosts?
   private var _duplicatedHost: BKHosts? = nil
   @State private var _conflictedICloudHost: BKHosts? = nil
@@ -318,7 +401,7 @@ struct HostView: View {
   @State private var _proxyCmd: String = ""
   @State private var _proxyJump: String = ""
   @State private var _sshConfigAttachment: String = HostView.__sshConfigAttachmentExample
-  
+
   @State private var _moshServer: String = ""
   @State private var _moshPort: String = ""
   @State private var _moshPrediction: BKMoshPrediction = BKMoshPredictionAdaptive
@@ -332,23 +415,23 @@ struct HostView: View {
 
   @State private var _agentForwardPrompt: BKAgentForward = BKAgentForwardNo
   @State private var _agentForwardKeys: [String] = []
-  
+
   @State private var _errorMessage: String = ""
-  
+
   private var _iCloudVersion: Bool
   private var _reloadList: () -> ()
   private var _cleanAlias: String {
     _alias.trimmingCharacters(in: .whitespacesAndNewlines)
   }
-  
-  
+
+
   init(host: BKHosts?, iCloudVersion: Bool = false, reloadList: @escaping () -> ()) {
     _host = host
     _iCloudVersion = iCloudVersion
     _conflictedICloudHost = host?.iCloudConflictCopy
     _reloadList = reloadList
   }
-  
+
   init(duplicatingHost host: BKHosts, reloadList: @escaping () -> ()) {
     _host = nil
     _duplicatedHost = host
@@ -356,16 +439,16 @@ struct HostView: View {
     _conflictedICloudHost = nil
     _reloadList = reloadList
   }
-  
+
   private func _usageHint() -> String {
     var alias = _cleanAlias
     if alias.count < 2 {
       alias = "[alias]"
     }
-    
+
     return "Use `mosh \(alias)` or `ssh \(alias)` from the shell to connect."
   }
-  
+
   var body: some View {
     List {
       if let iCloudCopy = _conflictedICloudHost {
@@ -401,7 +484,7 @@ struct HostView: View {
       ) {
         Field("Alias", $_alias, next: "HostName", placeholder: "Required")
       }.disabled(!_enabled)
-      
+
       Section(header: Text("SSH")) {
         Field("HostName",  $_hostName,  next: "Port",      placeholder: "Host or IP address. Required", enabled: _enabled, kbType: .URL)
         Field("Port",      $_port,      next: "User",      placeholder: "22", enabled: _enabled, kbType: .numberPad)
@@ -417,7 +500,7 @@ struct HostView: View {
         Field("ProxyJump", $_proxyJump, next: "Server",    placeholder: "bastion1,bastion2", enabled: _enabled)
         FieldTextArea("SSH Config", $_sshConfigAttachment, enabled: _enabled)
       }
-      
+
       Section(
         header: Text("MOSH")
       ) {
@@ -442,7 +525,7 @@ struct HostView: View {
       }.disabled(!_enabled)
 
       Section(header: Label("Files.app", systemImage: "folder")) {
-        ForEach(_domains, content: { FileDomainRow(domain: $0, alias: _cleanAlias, refreshList: _refreshDomainsList) })
+        ForEach(_domains, content: { FileDomainRow(domain: $0, alias: _cleanAlias, refreshList: _refreshDomainsList, saveHost: _saveHost) })
           .onDelete { indexSet in
             _domains.remove(atOffsets: indexSet)
           }
@@ -453,7 +536,8 @@ struct HostView: View {
               id:UUID(),
               displayName: displayName.isEmpty ? "Location Name" : displayName,
               remotePath: "~",
-              proto: "sftp"
+              proto: "sftp",
+              useReplicatedExtension: true
             ))
           },
           label: { Label("Add Location", systemImage: "folder.badge.plus") }
@@ -473,12 +557,7 @@ struct HostView: View {
       trailing: Group {
         if !_iCloudVersion {
           Button("Save", action: {
-            do  {
-              try _validate()
-            } catch {
-              _errorMessage = error.localizedDescription
-              return
-            }
+            _validate()
             _saveHost()
             _reloadList()
             _nav.navController.popViewController(animated: true)
@@ -493,11 +572,11 @@ struct HostView: View {
         loadHost()
       }
     }
-    
+
   }
-  
+
   private static var __sshConfigAttachmentExample: String { "# Compression no" }
-  
+
   func loadHost() {
     _loaded = true
 
@@ -538,40 +617,45 @@ struct HostView: View {
       _domains = FileProviderDomain.listFrom(jsonString: host.fpDomainsJSON)
     }
   }
-  
-  private func _validate() throws {
+
+  private func _validate() {
     let cleanAlias = _cleanAlias
-    
-    if cleanAlias.isEmpty {
-      throw FormValidationError.general(
-        message: "Alias is required."
-      )
+
+    do {
+      if cleanAlias.isEmpty {
+        throw ValidationError.general(
+          message: "Alias is required."
+        )
+      }
+
+      if let _ = cleanAlias.rangeOfCharacter(from: .whitespacesAndNewlines) {
+        throw ValidationError.general(
+          message: "Spaces are not permitted in the alias."
+        )
+      }
+
+      if let _ = BKHosts.withHost(cleanAlias), cleanAlias != _host?.host {
+        throw ValidationError.general(
+          message: "Cannot have two hosts with the same alias."
+        )
+      }
+
+      let cleanHostName = _hostName.trimmingCharacters(in: .whitespacesAndNewlines)
+      if let _ = cleanHostName.rangeOfCharacter(from: .whitespacesAndNewlines) {
+        throw ValidationError.general(message: "Spaces are not permitted in the host name.")
+      }
+
+      if cleanHostName.isEmpty {
+        throw ValidationError.general(
+          message: "HostName is required."
+        )
+      }
+    } catch {
+      _errorMessage = error.localizedDescription
+      return
     }
-    
-    if let _ = cleanAlias.rangeOfCharacter(from: .whitespacesAndNewlines) {
-      throw FormValidationError.general(
-        message: "Spaces are not permitted in the alias."
-      )
-    }
-    
-    if let _ = BKHosts.withHost(cleanAlias), cleanAlias != _host?.host {
-      throw FormValidationError.general(
-        message: "Cannot have two hosts with the same alias."
-      )
-    }
-    
-    let cleanHostName = _hostName.trimmingCharacters(in: .whitespacesAndNewlines)
-    if let _ = cleanHostName.rangeOfCharacter(from: .whitespacesAndNewlines) {
-      throw FormValidationError.general(message: "Spaces are not permitted in the host name.")
-    }
-    
-    if cleanHostName.isEmpty {
-      throw FormValidationError.general(
-        message: "HostName is required."
-      )
-    }    
   }
-  
+
   private func _saveHost() {
     let savedHost = BKHosts.saveHost(
       _host?.host.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -594,7 +678,7 @@ struct HostView: View {
       agentForwardPrompt: _agentForwardPrompt,
       agentForwardKeys: _agentForwardPrompt == BKAgentForwardNo ? [] : _agentForwardKeys
     )
-    
+
     guard let host = savedHost else {
       return
     }
@@ -606,7 +690,7 @@ struct HostView: View {
     _NSFileProviderManager.syncWithBKHosts()
     #endif
   }
-  
+
   private func _saveICloudVersion() {
     guard
       let host = _host,
@@ -615,18 +699,18 @@ struct HostView: View {
     else {
       return
     }
-    
+
     if let recordId = host.iCloudRecordId {
       syncHandler.deleteRecord(recordId, of: BKiCloudRecordTypeHosts)
     }
     let moshPort = iCloudHost.moshPort
     let moshPortEnd = iCloudHost.moshPortEnd
-    
+
     var moshPortRange = moshPort?.stringValue ?? ""
     if let moshPort = moshPort, let moshPortEnd = moshPortEnd {
       moshPortRange = "\(moshPort):\(moshPortEnd)"
     }
-    
+
     BKHosts.saveHost(
       host.host,
       withNewHost: iCloudHost.host,
@@ -648,19 +732,19 @@ struct HostView: View {
       agentForwardPrompt: BKAgentForward(UInt32(iCloudHost.agentForwardPrompt?.intValue ?? 0)),
       agentForwardKeys: iCloudHost.agentForwardKeys
     )
-    
+
     BKHosts.updateHost(
       iCloudHost.host,
       withiCloudId: iCloudHost.iCloudRecordId,
       andLastModifiedTime: iCloudHost.lastModifiedTime
     )
-    
+
     BKHosts.markHost(iCloudHost.host, for: BKHosts.record(fromHost: host), withConflict: false)
     syncHandler.check(forReachabilityAndSync: nil)
-    
+
     _NSFileProviderManager.syncWithBKHosts()
   }
-  
+
   private func _saveLocalVersion() {
     guard let host = _host, let syncHandler = BKiCloudSyncHandler.shared()
     else {
@@ -672,19 +756,20 @@ struct HostView: View {
     }
     syncHandler.check(forReachabilityAndSync: nil)
   }
-  
+
   private func _refreshDomainsList() {
     _domainsListVersion += 1
   }
 }
 
-enum FormValidationError: Error, LocalizedError {
+fileprivate enum ValidationError: Error, LocalizedError {
   case general(message: String, field: String? = nil)
-  
+  case connection(message: String)
+
   var errorDescription: String? {
     switch self {
     case .general(message: let message, field: _): return message
+    case .connection(message: let message): return message
     }
   }
 }
-

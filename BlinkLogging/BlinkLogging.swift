@@ -35,11 +35,29 @@ import Foundation
 
 
 public class BlinkLogging {
-  public typealias LogHandlerFactory = ((Publishers.Share<AnyPublisher<[BlinkLogKeys:Any], Never>>) throws -> AnyCancellable)
+  public typealias LogHandlerParameters = (Publishers.Share<AnyPublisher<[BlinkLogKeys:Any], Never>>)
+  public typealias LogHandlerFactory = ((LogHandlerParameters) throws -> AnyCancellable)
   fileprivate static var handlers = [LogHandlerFactory]()
   
   public static func handle(_ handler: @escaping LogHandlerFactory) {
     self.handlers.append(handler)
+  }
+  
+  public static func reset() {
+    self.handlers = []
+  }
+}
+
+enum BlinkLoggingHandlers {
+  static func print(logPublisher: BlinkLogging.LogHandlerParameters) -> AnyCancellable {
+    logPublisher.filter(logLevel: .debug)
+      .format { [
+        "[\(Date().formatted(.iso8601))]",
+        "[\($0[.logLevel] ?? BlinkLogLevel.log)]",
+        $0[.component] as? String ?? "global",
+        $0[.message] as? String ?? ""
+      ].joined(separator: " : ") }
+      .sinkToOutput()
   }
 }
 
@@ -56,7 +74,7 @@ public struct BlinkLogKeys: Hashable {
   }
 }
 
-public enum BlinkLogLevel: Int, Comparable {
+public enum BlinkLogLevel: Int, Comparable, CustomStringConvertible {
   case trace
   case debug
   case info
@@ -68,6 +86,18 @@ public enum BlinkLogLevel: Int, Comparable {
   
   public static func < (lhs: BlinkLogLevel, rhs: BlinkLogLevel) -> Bool {
     lhs.rawValue < rhs.rawValue
+  }
+  
+  public var description: String {
+    switch self {
+    case .trace: "TRACE"
+    case .debug: "DEBUG"
+    case .info: "INFO"
+    case .warn: "WARN"
+    case .error: "ERROR"
+    case .fatal: "FATAL"
+    case .log: "LOG"
+    }
   }
 }
 

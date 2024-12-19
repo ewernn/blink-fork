@@ -105,6 +105,7 @@ enum BKAgentForward {
       agentForwardPrompt:(enum BKAgentForward)agentForwardPrompt
         agentForwardKeys:(NSArray<NSString *> *)agentForwardKeys
 ;
++ (void)_replaceHost:(BKHosts *)newHost;
 + (void)updateHost:(NSString *)host withiCloudId:(CKRecordID *)iCloudId andLastModifiedTime:(NSDate *)lastModifiedTime;
 + (void)markHost:(NSString *)host forRecord:(CKRecord *)record withConflict:(BOOL)hasConflict;
 + (NSMutableArray<BKHosts *> *)all;

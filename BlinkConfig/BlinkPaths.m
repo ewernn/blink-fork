@@ -47,6 +47,11 @@ NSString *__iCloudsDriveDocumentsPath = nil;
   return __homePath;
 }
 
++ (NSURL *)homeURL
+{
+  return [NSURL fileURLWithPath:[self homePath]];
+}
+
 + (NSString *)documentsPath
 {
   if (__documentsPath == nil) {
@@ -95,15 +100,26 @@ NSString *__iCloudsDriveDocumentsPath = nil;
     destinationPath:[self documentsPath]];
 }
 
-+ (void)_linkAtPath:(NSString *)atPath destinationPath:(NSString *)destinationPath {
++ (void)_linkAtPath:(NSString *)path destinationPath:(NSString *)destinationPath {
   NSFileManager *fm = [NSFileManager defaultManager];
-  if ([fm fileExistsAtPath:atPath]) {
-    return;
-  }
+  
+  // Don't use fileExists as that would traverse the symlink.
+  if ([fm attributesOfItemAtPath:path error:nil]) {
+    NSString *currentDestinationPath = [fm destinationOfSymbolicLinkAtPath:path error:nil];
+    if (!currentDestinationPath) {
+      return;
+    }
 
+    // We lost access. Remove that symlink.
+    if (![fm isReadableFileAtPath: currentDestinationPath]) {
+      [fm removeItemAtPath: path error: nil];
+    } else {
+      return;
+    }
+  }
   NSError *error = nil;
 
-  BOOL ok = [fm createSymbolicLinkAtPath:atPath
+  BOOL ok = [fm createSymbolicLinkAtPath:path
                      withDestinationPath:destinationPath
                                    error:&error];
 
@@ -242,6 +258,12 @@ NSString *__iCloudsDriveDocumentsPath = nil;
   return nil;
 }
 
++ (NSURL *)fileProviderReplicatedURL {
+  NSString *fileProviderPath = [[self groupContainerPath] stringByAppendingPathComponent:@"FileProviderReplicated"];
+  [self _ensureFolderAtPath:fileProviderPath];
+  return [NSURL fileURLWithPath:fileProviderPath];
+}
+
 + (NSString *)knownHostsFile
 {
   return [[self ssh] stringByAppendingPathComponent:@"known_hosts"];
@@ -260,38 +282,6 @@ NSString *__iCloudsDriveDocumentsPath = nil;
 + (NSURL *)blinkCodeErrorLogURL
 {
   return [[self blinkURL] URLByAppendingPathComponent:@"blinkCode.log"];
-}
-
-+ (NSArray<NSString *> *)cleanedSymlinksInHomeDirectory
-{
-  NSFileManager *fm = [NSFileManager defaultManager];
-  NSMutableArray<NSString *> *allowedPaths = [[NSMutableArray alloc] init];
-
-  NSString *homePath = [BlinkPaths homePath];
-  NSArray<NSString *> * files = [fm contentsOfDirectoryAtPath:homePath error:nil];
-
-  for (NSString *path in files) {
-    NSString *filePath = [homePath stringByAppendingPathComponent:path];
-    NSDictionary * attrs = [fm attributesOfItemAtPath:filePath error:nil];
-    if (attrs[NSFileType] != NSFileTypeSymbolicLink) {
-      continue;
-    }
-
-    NSString *destPath = [fm destinationOfSymbolicLinkAtPath:filePath error:nil];
-    if (!destPath) {
-      continue;
-    }
-
-    if (![fm isReadableFileAtPath:destPath]) {
-
-      // We lost access. Remove that symlink
-      [fm removeItemAtPath:filePath error:nil];
-      continue;
-    }
-
-    [allowedPaths addObject:destPath];
-  }
-  return allowedPaths;
 }
 
 @end
