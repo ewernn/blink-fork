@@ -62,20 +62,22 @@ struct BookmarkedLocationsView: View {
         )
       } else {
         List {
-          ForEach(locations) { location in
-            Text(location.name)
-          }
-          .onDelete(perform: deleteLocation)
+          Section(footer: Text("Bookmarked locations are symlinked to your shell's Home directory and accessible via the CLI. [Learn More](https://docs.blink.sh)")) {
+            ForEach(locations) { location in
+              Text(location.name)
+            }
+              .onDelete(perform: deleteLocation)
 
-          if let newLocationURL = newLocationURL {
-            TextField("Enter symlink name", text: $newLocationName, onCommit: {
-              commitLocation(name: newLocationName, location: newLocationURL)
-            })
-            .focused($newLocationFocus)
-            .autocapitalization(.none)
-            .disableAutocorrection(true)
-            .onAppear { newLocationFocus = true }
-            .submitLabel(.done)
+            if let newLocationURL = newLocationURL {
+              TextField("Enter symlink name", text: $newLocationName, onCommit: {
+                                                                        commitLocation(name: newLocationName, location: newLocationURL)
+                                                                      })
+                .focused($newLocationFocus)
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
+                .onAppear { newLocationFocus = true }
+                .submitLabel(.done)
+            }
           }
         }
       }
@@ -111,13 +113,13 @@ struct BookmarkedLocationsView: View {
       }
       .onAppear(perform: fetchLocations)
   }
-  
+
   private func commitLocation(name: String, location: URL) {
     let name = name.trimmingCharacters(in: .whitespaces)
     guard !name.isEmpty else {
       return
     }
-    
+
     do {
       let addedLocation = try locationsManager.addLocation(name: name, location: location)
       resetNewLocation()
@@ -142,7 +144,7 @@ struct BookmarkedLocationsView: View {
       showingErrorAlert = true
     }
   }
-  
+
   private func fetchLocations() {
     do {
       locations = try locationsManager.getLocations()
@@ -156,7 +158,7 @@ struct BookmarkedLocationsView: View {
       dismissView = true
     }
   }
-  
+
   private func deleteLocation(at offsets: IndexSet) {
     for index in offsets {
       let location = locations[index]
@@ -164,7 +166,7 @@ struct BookmarkedLocationsView: View {
     }
     fetchLocations()
   }
-  
+
   private func handleDocumentPickerResult(_ result: Result<URL, Error>) {
     switch result {
     case .success(let url):
@@ -175,7 +177,7 @@ struct BookmarkedLocationsView: View {
       showingErrorAlert = true
     }
   }
-  
+
   private func resetNewLocation() {
     newLocationFocus = false
     // Avoid race with losing focus and deleting the row.
