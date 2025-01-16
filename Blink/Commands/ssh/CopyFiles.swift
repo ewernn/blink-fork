@@ -75,13 +75,25 @@ struct BlinkCopyCommand: ParsableCommand {
         help: "Copy only when source is newer than destination, considering the timestamp. This includes -p.")
   var update: Bool = false
 
-  @Argument(help: "SOURCE(s)",
-            transform: { try FileLocationPath($0) })
-  var source: FileLocationPath
-
-  @Argument(help: "DEST",
-            transform: { try FileLocationPath($0) })
-  var destination: FileLocationPath = try! FileLocationPath(".")
+  @Argument(help: "SOURCE(s) ... DEST",
+            transform: {
+    try FileLocationPath($0)
+  })
+  private var locations: [FileLocationPath]
+  var source: [FileLocationPath] {
+    if locations.count > 1 {
+      return locations.dropLast()
+    } else {
+      return locations
+    }
+  }
+  var destination: FileLocationPath {
+    if locations.count <= 1 {
+      return try! FileLocationPath(".")
+    } else {
+      return locations.last!
+    }
+  }
 
   var preserveFlags: CopyAttributesFlag {
     preserve ? CopyAttributesFlag([.permissions, .timestamp]) : CopyAttributesFlag([])
@@ -208,9 +220,17 @@ public class BlinkCopy: NSObject {
       remoteTranslator(toFilePath: command.destination.filePath, atHost: command.destination.hostPath!, using: destProtocol, isSource: false)
 
     // Source
-    let sourceProtocol = command.source.proto ?? defaultRemoteProtocol
-    var sourceTranslator: AnyPublisher<Translator, Error>? = (sourceProtocol == .local) ? localTranslator(to: command.source.filePath) :
-      remoteTranslator(toFilePath: command.source.filePath, atHost: command.source.hostPath!, using: sourceProtocol)
+    var sourceTranslators: AnyPublisher<Translator, Error>? = command.source.publisher.flatMap { source in
+      let sourceProtocol = source.proto ?? defaultRemoteProtocol
+      let rootTranslator = (sourceProtocol == .local) ? self.localTranslator(to: source.filePath) :
+        self.remoteTranslator(toFilePath: source.filePath, atHost: source.hostPath!, using: sourceProtocol)
+      
+      return rootTranslator.flatMap { t -> AnyPublisher<Translator, Error> in
+        t.cloneWalkTo(source.filePath)
+      }.flatMap { t -> AnyPublisher<Translator, Error> in
+        t.translatorsMatching(path: source.filePath)
+      }.eraseToAnyPublisher()
+    }.eraseToAnyPublisher()
 
     var rc: Int32 = 0
     var rootFilePath: String!
@@ -222,31 +242,14 @@ public class BlinkCopy: NSObject {
     var lastElapsed = 0
     copyCancellable = destTranslator!.flatMap { d -> CopyProgressInfoPublisher in
       rootFilePath = d.current
-
-      return sourceTranslator!
-        .flatMap {
-          $0.cloneWalkTo(self.command.source.filePath)
-        }
-        .flatMap {
-          $0.translatorsMatching(path: self.command.source.filePath)
-        }
-        .reduce([] as [Translator]) { (all, t) in
-          var new = all
-          new.append(t)
-          return new
-        }
-        .tryMap { source -> [Translator] in
-          if source.count == 0 {
-            throw CommandError(message: "Source not found")
-          }
-          return source
-        }
-        .flatMap { source -> AnyPublisher<([Translator], Translator), Error> in
+      
+      return sourceTranslators!
+        .flatMap(maxPublishers: .max(1)) { source -> AnyPublisher<(Translator, Translator), Error> in
           // Walk on destination, and it may have to be a directory or a file.
           return d.cloneWalkTo(self.command.destination.filePath)
             .tryCatch { error -> AnyPublisher<Translator, Error> in
               // If we are copying a single item, then we can create a file for it.
-              guard source.count == 1 else {
+              guard self.command.source.count == 1 else {
                 throw error
               }
               let newFileName = (self.command.destination.filePath as NSString).lastPathComponent
@@ -261,7 +264,7 @@ public class BlinkCopy: NSObject {
             .eraseToAnyPublisher()
         }
         .flatMap {
-          $1.copy(from: $0, args: copyArguments)
+          $1.copy(from: [$0], args: copyArguments)
         }.eraseToAnyPublisher()
     }.sink(receiveCompletion: { completion in
       if case let .failure(error) = completion {
@@ -313,7 +316,7 @@ public class BlinkCopy: NSObject {
 
     // ...and because of that, make another run after cleanup to let hanging self-loops close.
     copyCancellable = nil
-    sourceTranslator = nil
+    sourceTranslators = nil
     destTranslator = nil
     RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.5))
     return rc

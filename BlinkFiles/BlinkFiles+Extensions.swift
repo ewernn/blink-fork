@@ -32,6 +32,11 @@
 import Foundation
 import Combine
 
+public struct BlinkFilesError: Error, LocalizedError {
+  let errorDescription: String
+  let originalError: Error
+}
+
 public extension Translator {
   func cloneWalkTo(_ path: String) -> AnyPublisher<Translator, Error> {
     let t = self.clone()
@@ -64,8 +69,8 @@ extension Translator {
           return name
         }
         return nil
-      }.flatMap {
-        sourceRootTranslator!.cloneWalkTo($0)
+      }.flatMap { name in
+        sourceRootTranslator!.cloneWalkTo(name).mapError { err in BlinkFilesError(errorDescription: "Could not walk to \(name)", originalError: err)}
       }.eraseToAnyPublisher()
   }
 
