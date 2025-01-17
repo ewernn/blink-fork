@@ -50,7 +50,20 @@ class CaptureController: UIViewController {
       UIKeyCommand.inputHome,
       UIKeyCommand.inputEnd,
       UIKeyCommand.inputPageUp,
-      UIKeyCommand.inputPageDown
+      UIKeyCommand.inputPageDown,
+      // Function keys up to F12 as reported by shortcuts.
+      UIKeyCommand.f1,
+      UIKeyCommand.f2,
+      UIKeyCommand.f3,
+      UIKeyCommand.f4,
+      UIKeyCommand.f5,
+      UIKeyCommand.f6,
+      UIKeyCommand.f7,
+      UIKeyCommand.f8,
+      UIKeyCommand.f9,
+      UIKeyCommand.f10,
+      UIKeyCommand.f11,
+      UIKeyCommand.f12
     ]
     let modifiers: [UIKeyModifierFlags] = [.shift, .control, .alternate, .command]
     var mods: Set<Int> = [0]

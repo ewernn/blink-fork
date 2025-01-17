@@ -86,6 +86,30 @@ class KeyShortcut: ObservableObject, Codable, Identifiable {
       res += KeyCode.pageDown.symbol
     case UIKeyCommand.inputEscape:
       res += KeyCode.escape.symbol
+    case UIKeyCommand.f1:
+      res += KeyCode.f1.symbol
+    case UIKeyCommand.f2:
+      res += KeyCode.f2.symbol
+    case UIKeyCommand.f3:
+      res += KeyCode.f3.symbol
+    case UIKeyCommand.f4:
+      res += KeyCode.f4.symbol
+    case UIKeyCommand.f5:
+      res += KeyCode.f5.symbol
+    case UIKeyCommand.f6:
+      res += KeyCode.f6.symbol
+    case UIKeyCommand.f7:
+      res += KeyCode.f7.symbol
+    case UIKeyCommand.f8:
+      res += KeyCode.f8.symbol
+    case UIKeyCommand.f9:
+      res += KeyCode.f9.symbol
+    case UIKeyCommand.f10:
+      res += KeyCode.f10.symbol
+    case UIKeyCommand.f11:
+      res += KeyCode.f11.symbol
+    case UIKeyCommand.f12:
+      res += KeyCode.f12.symbol
     case " ":
       res += KeyCode.space.symbol
     case "\r":
