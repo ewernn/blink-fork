@@ -95,7 +95,7 @@ public class FileProviderReplicatedExtension: NSObject, NSFileProviderReplicated
       self.workingSet.resumeChangesTimerEvery(seconds: 5)
     }
 
-    DispatchQueue.main.async {
+    DispatchQueue.global(qos: .background).async {
       // Background clean-up
       self.cancellables.insert(self.cleanUpOldTmpFiles())
     }
