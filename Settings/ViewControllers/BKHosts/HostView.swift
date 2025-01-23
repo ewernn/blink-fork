@@ -524,7 +524,8 @@ struct HostView: View {
         }
       }.disabled(!_enabled)
 
-      Section(header: Label("Files.app", systemImage: "folder")) {
+      Section(header: Label("Files.app", systemImage: "folder"),
+              footer: Text("Access remote file systems from the Files.app. [Learn More](https://docs.blink.sh/advanced/files-app)")) {
         ForEach(_domains, content: { FileDomainRow(domain: $0, alias: _cleanAlias, refreshList: _refreshDomainsList, saveHost: _saveHost) })
           .onDelete { indexSet in
             _domains.remove(atOffsets: indexSet)

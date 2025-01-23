@@ -62,7 +62,7 @@ struct BookmarkedLocationsView: View {
         )
       } else {
         List {
-          Section(footer: Text("Bookmarked locations are symlinked to your shell's Home directory and accessible via the CLI. [Learn More](https://docs.blink.sh)")) {
+          Section(footer: Text("Bookmarked locations are symlinked to your shell's Home directory and accessible via the CLI. [Learn More](https://docs.blink.sh/advanced/bookmarks)")) {
             ForEach(locations) { location in
               Text(location.name)
             }
