@@ -226,8 +226,6 @@ public class BlinkCopy: NSObject {
         self.remoteTranslator(toFilePath: source.filePath, atHost: source.hostPath!, using: sourceProtocol)
       
       return rootTranslator.flatMap { t -> AnyPublisher<Translator, Error> in
-        t.cloneWalkTo(source.filePath)
-      }.flatMap { t -> AnyPublisher<Translator, Error> in
         t.translatorsMatching(path: source.filePath)
       }.eraseToAnyPublisher()
     }.eraseToAnyPublisher()
