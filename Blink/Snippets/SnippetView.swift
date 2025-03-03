@@ -47,14 +47,14 @@ public struct SnippetView: View {
     } label: {
       VStack(alignment: .leading) {
         HStack {
-          Text(index).font(Font(BlinkFonts.snippetEditContent)).bold(fuzzyMode)
+          Text(index).font(Font(BlinkSnippetsFonts.snippetEditContent)).bold(fuzzyMode)
             .frame(maxWidth: .infinity, alignment: .leading).opacity(fuzzyMode ? 1.0 : 0.4)
           if selected {
             Spacer()
             Text(Image(systemName: "return")).opacity(0.5)
           }
         }
-        Text(content).font(Font(BlinkFonts.snippetEditContent))
+        Text(content).font(Font(BlinkSnippetsFonts.snippetEditContent))
           .frame(maxWidth: .infinity, alignment: .leading)
           .opacity(fuzzyMode ? 0.4 : 1.0)
       }

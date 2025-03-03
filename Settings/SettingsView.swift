@@ -45,6 +45,7 @@ struct SettingsView: View {
   @State private var _defaultUser = BLKDefaults.defaultUserName() ?? ""
   @StateObject private var _entitlements: EntitlementsManager = .shared
   @StateObject private var _model = PurchasesUserModel.shared
+  @State private var _displayBlinkClassicToPlus = false
 
   var body: some View {
     List {
@@ -70,24 +71,26 @@ struct SettingsView: View {
           Label(_entitlements.currentPlanName(), systemImage: "bag")
           Spacer()
           if !(_entitlements.earlyAccessFeatures.active || FeatureFlags.earlyAccessFeatures) {
-            Button("Upgrade") {
-              let vc = UIHostingController(rootView: OfferForFreeAndClassicsView().environmentObject(_nav))
-              _nav.navController.pushViewController(vc, animated: true)
-              _entitlements.navigationCtrl = _nav.navController
-            }
+            Button("Get Blink+") { _displayBlinkClassicToPlus = true }
           }
         }
-        Row {
-          HStack {
-            Label("Build Beta", systemImage: "hammer.circle")
-            Spacer()
-            Text("") // TODO: show status?
-              .foregroundColor(.secondary)
-          }
-        } details: {
-          BuildView().onAppear(perform: {
-            PurchasesUserModel.shared.refresh()
-          })
+        if _entitlements.earlyAccessFeatures.active {
+          Row {
+            HStack {
+              Label("Build Beta", systemImage: "hammer.circle")
+              Spacer()
+              if _entitlements.earlyAccessFeatures.period == .Trial {
+                Text("Needs Blink+")
+              } else {
+                Text("") // TODO: show status?
+                  .foregroundColor(.secondary)
+              }
+            }
+          } details: {
+              BuildView().onAppear(perform: {
+                BuildAccountModel.shared.checkBuildToken(animated: false)
+              })
+          }.disabled(_entitlements.earlyAccessFeatures.period != .Normal)
         }
       }
       Section("Connect") {
@@ -147,13 +150,13 @@ struct SettingsView: View {
         } details: {
           BookmarkedLocationsView()
         }
-        if EntitlementsManager.shared.earlyAccessFeatures.active || FeatureFlags.earlyAccessFeatures {
-          Row {
-            Label("Snips", systemImage: "chevron.left.square")
-          } details: {
-            SnippetsConfigView()
-          }
+
+        Row {
+          Label("Snips", systemImage: "chevron.left.square")
+        } details: {
+          SnippetsConfigView()
         }
+
         RowWithStoryBoardId(content: {
           HStack {
             Label("iCloud Sync", systemImage: "icloud")
@@ -234,6 +237,29 @@ struct SettingsView: View {
     }
     .listStyle(.grouped)
     .navigationTitle("Settings")
+    .sheet(isPresented: $_displayBlinkClassicToPlus) {
+      BlinkClassicToPlusWindow(urlHandler: blink_openurl, dismissHandler: { _displayBlinkClassicToPlus = false })
+    }
 
+  }
+}
+
+fileprivate struct BlinkClassicToPlusWindow: View {
+  let urlHandler: (URL) -> ()
+  let dismissHandler: () -> ()
+
+  @Environment(\.dynamicTypeSize) var dynamicTypeSize
+
+  var body: some View {
+    GeometryReader { proxy in
+      let ctx = PageCtx(
+        proxy: proxy,
+        dynamicTypeSize: dynamicTypeSize
+      )
+
+      NewOfferingsView(classicOffering: true, ctx: ctx, purchaseCompletedHandler: dismissHandler, urlHandler: urlHandler, dismissHandler: dismissHandler)
+        .frame(width: proxy.size.width, height: proxy.size.height)
+    }
+    .background(.black)
   }
 }

@@ -71,6 +71,8 @@ fileprivate extension EntitlementPeriodType {
       self = Self.Intro
     case .trial:
       self = Self.Trial
+    case .prepaid:
+      self = Self.None
     }
   }
 }
@@ -80,11 +82,8 @@ func configureRevCat() {
   let cfg = Configuration
     .builder(withAPIKey: XCConfig.infoPlistRevCatPubliKey())
     .with(appUserID: nil)
-    .with(observerMode: false)
     .with(userDefaults: UserDefaults.suite)
-    .with(usesStoreKit2IfAvailable: true)
     .build()
 
   Purchases.configure(with: cfg)
-  print("RevCat UserID is \(Purchases.shared.appUserID)")
 }

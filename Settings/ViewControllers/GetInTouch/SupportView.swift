@@ -35,10 +35,19 @@ import RevenueCat
 
 struct SupportView: View {
   @EnvironmentObject private var _nav: Nav
-
+  @State var displayWalkthrough = false
+  
   var body: some View {
     List {
       Section() {
+        HStack {
+          Button { displayWalkthrough = true }
+          label: {
+            Label("Walkthrough", systemImage: "hand.tap")
+          }
+          Spacer()
+          Text("").foregroundColor(.secondary)
+        }
         HStack {
           Button {
             BKLinkActions.sendToDocumentation()
@@ -106,5 +115,27 @@ struct SupportView: View {
     }
       .listStyle(.grouped)
       .navigationTitle("Support")
+      .sheet(isPresented: $displayWalkthrough) {
+        WalkthroughWindow(urlHandler: blink_openurl, dismissHandler: { displayWalkthrough = false })
+      }
+  }
+}
+
+fileprivate struct WalkthroughWindow: View {
+  let urlHandler: (URL) -> ()
+  let dismissHandler: () -> ()
+
+  @Environment(\.dynamicTypeSize) var dynamicTypeSize
+
+  var body: some View {
+    GeometryReader { proxy in
+      let ctx = PageCtx(
+        proxy: proxy,
+        dynamicTypeSize: dynamicTypeSize
+      )
+
+      WalkthroughView(ctx: ctx, urlHandler: urlHandler, dismissHandler: dismissHandler)
+    }
+      .background(.black)
   }
 }

@@ -33,6 +33,12 @@ import Foundation
 import SwiftUI
 import BlinkSnippets
 
+public enum BlinkSnippetsFonts {
+  //  static let snippetIndex = Font.custom(BLINK_APP_FONT_NAME, size: 18, relativeTo: .body)
+  //  static let snippetContent = Font.custom(BLINK_APP_FONT_NAME, size: 18, relativeTo: .body)
+  static let snippetEditContent = UIFont(name: BLINK_APP_FONT_NAME, size: 18)!
+}
+
 public struct SnippetsListView: View {
   @ObservedObject var model: SearchModel
   

@@ -41,34 +41,32 @@ class PurchasesUserModel: ObservableObject {
   @Published var classicProduct: StoreProduct? = nil
   @Published var blinkPlusBuildBasicProduct: StoreProduct? = nil
   @Published var blinkPlusProduct: StoreProduct? = nil
-  
+
   @Published var blinkBuildTrial: IntroEligibility? = nil
   @Published var blinkPlusBuildTrial: IntroEligibility? = nil
-  @Published var blinkPlusDiscount: IntroEligibility? = nil
-  
+  @Published var blinkPlusIntroOffer: IntroEligibility? = nil
+
   // MARK: Progress indicators
   @Published var purchaseInProgress: Bool = false
   @Published var restoreInProgress: Bool = false
-  
+
   @Published var buildBasicTrialEligibility: IntroEligibility? = nil
-  
+
   @Published var restoredPurchaseMessageVisible = false
   @Published var restoredPurchaseMessage = ""
   @Published var alertErrorMessage: String = ""
-  
+
   var isBuildBasicTrialEligible: Bool {
     self.buildBasicTrialEligibility?.status == .eligible
   }
 
-  
   private init() {
-    refresh()
+    refreshProducts()
   }
-  
+
   static let shared = PurchasesUserModel()
-  
-  func refresh() {
-    BuildAccountModel.shared.checkBuildToken(animated: false)
+
+  private func refreshProducts() {
     if self.blinkShellPlusProduct == nil
         || self.classicProduct == nil
         || self.buildBasicProduct == nil
@@ -77,34 +75,37 @@ class PurchasesUserModel: ObservableObject {
       self.fetchTrialEligibility()
     }
   }
-  
-  
-  func purchaseBuildBasic() async {    
+
+  private func refreshTokens() {
+    BuildAccountModel.shared.checkBuildToken(animated: false)
+  }
+
+  func purchaseBuildBasic() async {
     guard let product = buildBasicProduct else {
       self.alertErrorMessage = "Product should be loaded"
       return
     }
-    
+
     guard PublishingOptions.current.contains(.appStore) else {
       self.alertErrorMessage = "Available only in App Store"
       return
     }
-    
+
     withAnimation {
       self.purchaseInProgress = true
     }
-    
+
     defer {
-      self.refresh()
+      BuildAccountModel.shared.checkBuildToken(animated: false)
       self.purchaseInProgress = false
     }
-    
+
     do {
       let (_, _, canceled) = try await Purchases.shared.purchase(product: product)
       if canceled {
         return
       }
-      
+
       await BuildAccountModel.shared.trySignIn()
       withAnimation {
         self.purchaseInProgress = false
@@ -113,147 +114,134 @@ class PurchasesUserModel: ObservableObject {
       self.alertErrorMessage = error.localizedDescription
     }
   }
-  
-  func purchaseBlinkPlusBuildWithValidation(setupTrial: Bool) async {
-    await _purchaseWithValidation(product: blinkPlusBuildBasicProduct, setupTrial: setupTrial)
-  }
-  
-  func purchaseBlinkShellPlusWithValidation() async {
-    await _purchaseWithValidation(product: blinkShellPlusProduct)
-  }
-  
-  func purchaseBlinkPlusWithValidation() async {
-    await _purchaseWithValidation(product: blinkPlusProduct)
+
+  func purchaseBlinkPlusBuildWithTrialValidation(setupTrial: Bool) async -> Bool {
+    let duration: TrialDuration = setupTrial ? .oneMonth : .no
+    return await _purchaseWithTrialValidation(product: blinkPlusBuildBasicProduct, setupTrialDuration: duration)
   }
 
-  func purchaseClassic() {
-    _purchase(product: classicProduct)
+  func purchaseBlinkPlusWithTrialValidation(setupTrial: Bool) async -> Bool {
+    let duration: TrialDuration = setupTrial ? .twoWeeks : .no
+    return await _purchaseWithTrialValidation(product: blinkPlusProduct, setupTrialDuration: duration)
   }
-  
+
+  // func purchaseClassic() {
+  //   _purchase(classicProduct)
+  // }
+
   func buildTrialAvailable() -> Bool {
     self.blinkBuildTrial?.status == IntroEligibilityStatus.eligible
   }
-  
+
   func blinkPlusBuildTrialAvailable() -> Bool {
     blinkPlusBuildTrial?.status == IntroEligibilityStatus.eligible
   }
 
+  func blinkPlusIntroOfferAvailable() -> Bool {
+    blinkPlusIntroOffer?.status == IntroEligibilityStatus.eligible
+  }
+
   func getUserID() -> String { Purchases.shared.appUserID }
-  
-  private func _purchase(product: StoreProduct?) {
-    guard let product = product else {
-      return
+
+  private func _purchase(_ product: StoreProduct) async -> Bool {
+    do {
+      let result = try await Purchases.shared.purchase(product: product)
+      if result.userCancelled {
+        return false
+      }
+      return true
+    } catch {
+      self.alertErrorMessage = "Could not continue with purchase - \(error.localizedDescription)"
+      return false
     }
+  }
+
+  private func _setupTrialProgressNotification(_ progress: TrialProgressNotification) async -> Bool {
+    do {
+      let notificationsAccepted = try await progress.setup()
+
+      if !notificationsAccepted {
+        self.alertErrorMessage = "To continue, please accept or disable notifications for trial conversion."
+        return false
+      }
+
+      return true
+    } catch {
+      self.alertErrorMessage = "Could not enable notifications - \(error.localizedDescription)"
+      return false
+    }
+  }
+
+  private func _purchaseWithTrialValidation(product: StoreProduct?, setupTrialDuration: TrialDuration = .no) async -> Bool {
+    guard let product = product else {
+      self.alertErrorMessage = "No valid products selected"
+      return false
+    }
+
     withAnimation {
       self.purchaseInProgress = true
     }
-    
-    Purchases.shared.purchase(product: product) { (transaction, purchaseInfo, error, cancelled) in
-      self.refresh()
+
+    defer {
       self.purchaseInProgress = false
     }
-  }
-  
-  private func _purchaseWithValidation(product: StoreProduct?, setupTrial: Bool = false) async {
-//    _purchase(product: product)
-    if setupTrial {
-      do {
-        var notificationsAccepted = false
-        switch product?.productIdentifier {
-        case ProductBlinkPlusBuildBasicID:
-          notificationsAccepted = try await TrialProgressNotification.OneWeek.setup()
-        default:
-          break
-        }
-        
-        if !notificationsAccepted {
-          EntitlementsManager.shared.keepShowingPaywall = false
-          self.purchaseInProgress = false
-          self.alertErrorMessage = "To continue, please accept or disable notifications for trial conversion."
-          return
-        }
-      } catch {
-        EntitlementsManager.shared.keepShowingPaywall = false
-        self.purchaseInProgress = false
-        self.alertErrorMessage = "Could not enable notifications - \(error.localizedDescription)"
-        return
+
+    if let notification: TrialProgressNotification = switch setupTrialDuration {
+    case .no:
+      nil
+    case .oneWeek:
+      TrialProgressNotification.OneWeek
+    case .twoWeeks:
+      TrialProgressNotification.TwoWeeks
+    case .oneMonth:
+      TrialProgressNotification.OneMonth
+    } {
+      let success = await _setupTrialProgressNotification(notification)
+      if !success {
+        return false
       }
     }
-    
-    do {
-      self.purchaseInProgress = true
-      EntitlementsManager.shared.keepShowingPaywall = true
-      let res = try await Purchases.shared.restorePurchases()
 
-      if EntitlementsManager.shared.build.active {
-          await BuildAccountModel.shared.trySignIn();
-      }
-
-      if res.activeSubscriptions.contains(ProductBlinkShellPlusID) {
-        self.restoredPurchaseMessage = "We have restored your subscription to Blink+.\nThanks for your support!"
-        self.restoredPurchaseMessageVisible = true
-        self.purchaseInProgress = false
-        return
-      }
-      if res.activeSubscriptions.contains(ProductBlinkPlusBuildBasicID) {
-        self.restoredPurchaseMessage = "We have restored your subscription to Blink+Build.\nThanks for your support!"
-        self.restoredPurchaseMessageVisible = true
-        self.purchaseInProgress = false
-        return
-      }
-    } catch {
-      if let error = error as? RevenueCat.ErrorCode,
-         error == .missingReceiptFileError {
-        // Ignore the error and continue with purchase
-        print("Missing Receipt File Error - continue with purchase")
-      } else {
-        EntitlementsManager.shared.keepShowingPaywall = false
-        self.purchaseInProgress = false
-        self.alertErrorMessage = error.localizedDescription
-        return
-      } 
-    }
-
-    EntitlementsManager.shared.keepShowingPaywall = false
-    _purchase(product: product)
+    return await _purchase(product)
   }
-  
-  func restorePurchases() {
+
+  func restorePurchases() async {
     self.restoreInProgress = true
-    EntitlementsManager.shared.keepShowingPaywall = false
-    Purchases.shared.restorePurchases(completion: { info, error in
-      self.refresh()
+
+    defer {
+      self.refreshTokens()
       self.restoreInProgress = false
-      if let error {
-        self.alertErrorMessage = error.localizedDescription
-        return
-      }
-      
+    }
+
+    do {
+      let result = try await Purchases.shared.restorePurchases()
+
       if EntitlementsManager.shared.build.active {
-        Task {
-          await BuildAccountModel.shared.trySignIn();
-        }
+        await BuildAccountModel.shared.trySignIn()
       }
-    })
+
+    } catch {
+      self.alertErrorMessage = error.localizedDescription
+    }
   }
-  
+
   func formattedPlusPriceWithPeriod() -> String? {
     blinkShellPlusProduct?.formattedPriceWithPeriod()
   }
-  
+
   func formattedBuildPriceWithPeriod() -> String? {
     buildBasicProduct?.formattedPriceWithPeriod()
   }
-  
+
   func formattedBlinkPlusBuildPriceWithPeriod() -> String? {
     blinkPlusBuildBasicProduct?.formattedPriceWithPeriod()
   }
-  
+
   func formattedBlinkPlusPriceWithPeriod() -> String? {
     blinkPlusProduct?.formattedPriceWithPeriod()
   }
-  
-  func fetchProducts() {
+
+  private func fetchProducts() {
     Purchases.shared.getProducts([
       ProductBlinkShellClassicID,
       ProductBlinkShellPlusID,
@@ -264,7 +252,7 @@ class PurchasesUserModel: ObservableObject {
       DispatchQueue.main.async {
         for product in products {
           let productID = product.productIdentifier
-          
+
           if productID == ProductBlinkShellPlusID {
             self.blinkShellPlusProduct = product
           } else if productID == ProductBlinkShellClassicID {
@@ -280,30 +268,33 @@ class PurchasesUserModel: ObservableObject {
       }
     }
   }
-  
-  func fetchTrialEligibility() {
+
+  private func fetchTrialEligibility() {
     Purchases.shared.checkTrialOrIntroDiscountEligibility(
       productIdentifiers: [
         ProductBlinkBuildBasicID,
         ProductBlinkPlusBuildBasicID,
-        ProductBlinkPlusID],
+        ProductBlinkPlusID
+      ],
       completion: { map in
         DispatchQueue.main.async {
           self.blinkBuildTrial = map[ProductBlinkBuildBasicID]
           self.blinkPlusBuildTrial = map[ProductBlinkPlusBuildBasicID]
-          self.blinkPlusDiscount = map[ProductBlinkPlusID]
+          self.blinkPlusIntroOffer = map[ProductBlinkPlusID]
         }
       })
   }
-  
+
   private lazy var _emailPredicate: NSPredicate = {
     let emailRegEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
     return NSPredicate(format:"SELF MATCHES %@", emailRegEx)
   }()
-  
-  enum MigrationStatus {
-    case validating, accepted
-    case denied(error: Error)
+
+  private enum TrialDuration {
+    case no
+    case oneWeek
+    case twoWeeks
+    case oneMonth
   }
 }
 
@@ -312,15 +303,15 @@ extension PurchasesUserModel {
   func openPrivacyAndPolicy() {
     blink_openurl(URL(string: "https://blink.sh/pp")!)
   }
-  
+
   func openTermsOfUse() {
     blink_openurl(URL(string: "https://blink.sh/blink-gpl")!)
   }
-  
+
   func openHelp() {
     blink_openurl(URL(string: "https://blink.sh/docs")!)
   }
-  
+
   func openMigrationHelp() {
     blink_openurl(URL(string: "https://docs.blink.sh/migration")!)
   }
@@ -400,7 +391,7 @@ extension StoreProduct {
 
 
 @objc public class PurchasesUserModelObjc: NSObject {
-  
+
   @objc public static func preparePurchasesUserModel() {
     configureRevCat()
     EntitlementsManager.shared.startUpdates()
@@ -414,9 +405,9 @@ extension Bundle {
           FileManager.default.fileExists(atPath: appStoreReceiptURL.path) else {
       return nil
     }
-    
+
     let receiptData = try? Data(contentsOf: appStoreReceiptURL, options: .alwaysMapped)
-    
+
     return receiptData?.base64EncodedString(options: [])
   }
 }

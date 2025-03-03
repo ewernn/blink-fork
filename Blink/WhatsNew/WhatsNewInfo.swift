@@ -38,7 +38,9 @@ class WhatsNewInfo {
   static private let defaults = UserDefaults.standard
   static private let MaxDisplayCount = 5
   static private let LastVersionKey = "LastVersionDisplay"
+  static private var LastVersion: String? { defaults.string(forKey: LastVersionKey) }
   static private let CountVersionDisplayKey = "CountVersionDisplayKey"
+  static private var CountVersionDisplay: Int? { defaults.integer(forKey: CountVersionDisplayKey) }
   static private var Version: String { UIApplication.blinkMajorVersion() }
   static private var prompt: String {
     "\u{1B}[30;48;5;45m New Blink \(Version)! \u{1B}[0m\u{1B}[38;5;45m\u{1B}[0m Check \"whatsnew\""
@@ -50,49 +52,66 @@ ssh, mosh - Connect to remote
 code - Code session
 build - Build dev environments
 config - Hosts, keys, keyboard, etc...
+<tab> - Display list of commands
 help - Quick help
 """
   }
+  // static private let BlinkClassicUpdatedDisplayKey = "BlinkClassicUpdatedDisplayKey"
+  // static private var BlinkClassicUpdatedDisplay: String { defaults.string(forKey: BlinkClassicUpdatedDisplayKey) }
+  // static private let BlinkClassicVersion = "18.2"
 
   private init() {}
-  
+
   static func mustDisplayInitialPrompt() -> String? {
     if isFirstInstall() {
       promptDisplayed()
       return firstUsagePrompt
     }
-    
+
     if mustDisplayVersionPrompt() {
       promptDisplayed()
       return prompt
     }
-    
+
     return nil
   }
-  
+
+  // static func mustDisplayBlinkClassicAlert() -> Bool {
+  //   if let lastUpdate = BlinkClassicUpdatedDisplay {
+  //     if versionsAreEqualIgnoringPatch(lastUpdate, BlinkClassicVersion) {
+  //       return false
+  //     }
+  //   }
+
+  //   return false
+  // }
+
+  // static func blinkClassicAlert() -> UIAlertController {
+  //   let alert = UIAlertController(title: "Blink Classic plan", message: "Your Blink Classic has been updated", preferredStyle: .alert)
+  //   alert.addAction(UIAlertAction(title: "OK"))
+  //   alert.addAction(UIAlertAction(title: "Update to Blink+"))
+  // }
+
   static func setNewVersion() {
     defaults.set(Version, forKey: LastVersionKey)
     defaults.set(0, forKey: CountVersionDisplayKey)
   }
-  
+
   static func isFirstInstall() -> Bool {
-    defaults.value(forKey: LastVersionKey) == nil ? true : false
+    Self.LastVersion == nil ? true : false
   }
 
   static private func mustDisplayVersionPrompt() -> Bool {
-//    return true
     let version = Version
-    //defaults.set("", forKey: LastVersionKey)
-    //defaults.set(0, forKey: CountVersionDisplayKey)
 
-    let displayCount = defaults.integer(forKey: CountVersionDisplayKey)
-    if let lastVersion = defaults.string(forKey: LastVersionKey) {
+    if let lastVersion = Self.LastVersion,
+       let displayCount = Self.CountVersionDisplay {
       return (displayCount < MaxDisplayCount) && !versionsAreEqualIgnoringPatch(v1: version, v2: lastVersion)
     } else {
       return true
     }
   }
-  
+
   static private func versionsAreEqualIgnoringPatch(v1: String, v2: String) -> Bool {
     v1.split(separator: ".").prefix(upTo: 2) == v2.split(separator: ".").prefix(upTo: 2)
   }

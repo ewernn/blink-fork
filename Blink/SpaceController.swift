@@ -936,24 +936,21 @@ extension SpaceController {
     }
   }
   
-  @objc func showWalkthroughAction() {
-    if self.view.window == ShadowWindow.shared {
-      return
-    }
-    DispatchQueue.main.async {
-      _ = KBTracker.shared.input?.resignFirstResponder()
-      let ctrl = UIHostingController(rootView: WalkthroughView(urlHandler: blink_openurl,
-                                                               dismissHandler: { self.dismiss(animated: true) })
-      )
-      ctrl.modalPresentationStyle = .formSheet
-      self.present(ctrl, animated: false)
-    }
-  }
+//  @objc func showWalkthroughAction() {
+//    if self.view.window == ShadowWindow.shared {
+//      return
+//    }
+//    DispatchQueue.main.async {
+//      _ = KBTracker.shared.input?.resignFirstResponder()
+//      let ctrl = UIHostingController(rootView: WalkthroughView(urlHandler: blink_openurl,
+//                                                               dismissHandler: { self.dismiss(animated: true) })
+//      )
+//      ctrl.modalPresentationStyle = .formSheet
+//      self.present(ctrl, animated: false)
+//    }
+//  }
   
   @objc func showSnippetsAction() {
-    guard EntitlementsManager.shared.earlyAccessFeatures.active || FeatureFlags.earlyAccessFeatures else {
-      return
-    }
     if let _ = _snippetsVC {
       return
     }
@@ -976,11 +973,7 @@ extension SpaceController {
       self.view.addSubview(menu.tapToCloseView)
       
       var ids: [BlinkActionID] = []
-      if EntitlementsManager.shared.earlyAccessFeatures.active || FeatureFlags.earlyAccessFeatures {
-        ids.append(contentsOf:  [.snippets])
-      }
-      
-      ids.append(contentsOf:  [.tabClose, .tabCreate])
+      ids.append(contentsOf:  [.snippets, .tabClose, .tabCreate])
       
       if DeviceInfo.shared().hasCorners {
         ids.append(contentsOf:  [.layoutMenu])

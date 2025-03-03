@@ -82,7 +82,7 @@ class TextViewBuilder {
 
 public final class PragmataProTheme<T: Runestone.Theme>: Runestone.Theme {
   
-  public var font = BlinkFonts.snippetEditContent
+  public var font = BlinkSnippetsFonts.snippetEditContent
   
   public var textColor: UIColor {
     originalTheme.textColor

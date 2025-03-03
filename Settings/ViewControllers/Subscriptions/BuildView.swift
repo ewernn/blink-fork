@@ -370,35 +370,34 @@ struct BuildIntroView: View {
                 .padding([.top, .bottom])
             }
           } else {
-            Text("This is Blink+ Service")
-              .fixedSize(horizontal: false, vertical: true)
-              .font(.system(size: props.h1, weight: .bold))
-              .padding([.top])
-            Text("Run work environments from all your devices. For \(_purchases.formattedBuildPriceWithPeriod() ?? "").")
-              .fixedSize(horizontal: false, vertical: true)
-              .font(.system(size: props.h2))
-              .padding([.bottom])
-            Button {
-              let vc = UIHostingController(rootView: OfferForFreeAndClassicsView().environmentObject(_nav))
-              _nav.navController.pushViewController(vc, animated: true)
-              _entitlements.navigationCtrl = _nav.navController
-            } label: {
-              Text("Compare Plans  \(Image(systemName: "bag.badge.questionmark"))")
-                .font(.system(size: props.h2, weight: .bold))
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }.foregroundColor(Color("BuildColor"))
-              .buttonStyle(.plain)
-              .frame(minHeight: props.button, maxHeight: props.button)
-              .padding([.top, .bottom])
+            // This path is now disabled on Settings
+//            Text("This is Blink+ Service")
+//              .fixedSize(horizontal: false, vertical: true)
+//              .font(.system(size: props.h1, weight: .bold))
+//              .padding([.top])
+//            Text("Run work environments from all your devices. For \(_purchases.formattedBuildPriceWithPeriod() ?? "").")
+//              .fixedSize(horizontal: false, vertical: true)
+//              .font(.system(size: props.h2))
+//              .padding([.bottom])
+//            Button {
+////              let vc = UIHostingController(rootView: OfferForFreeAndClassicsView().environmentObject(_nav))
+////              _nav.navController.pushViewController(vc, animated: true)
+////              _entitlements.navigationCtrl = _nav.navController
+//            } label: {
+//              Text("Compare Plans  \(Image(systemName: "bag.badge.questionmark"))")
+//                .font(.system(size: props.h2, weight: .bold))
+//                .frame(maxWidth: .infinity, maxHeight: .infinity)
+//            }.foregroundColor(Color("BuildColor"))
+//              .buttonStyle(.plain)
+//              .frame(minHeight: props.button, maxHeight: props.button)
+//              .padding([.top, .bottom])
           }
           HStack {
             Spacer()
             Button("Terms of Use", action: {
               _account.openTermsOfService()
             }).padding(.trailing)
-            Button("Restore Purchases", action: {
-              _purchases.restorePurchases()
-            })
+            Button("Restore Purchases", action: { Task { await _purchases.restorePurchases() }})
             Spacer()
           }.padding(.bottom).disabled(_purchases.restoreInProgress)
         }

@@ -45,7 +45,7 @@ class ExternalWindow: UIWindow {
 @objc class ShadowWindow: UIWindow {
   private var _refWindow: UIWindow
   private let _spCtrl: SpaceController
-  
+
   var spaceController: SpaceController { _spCtrl }
   @objc var refWindow: UIWindow {
     get {
@@ -55,28 +55,28 @@ class ExternalWindow: UIWindow {
       _refWindow = newValue
     }
   }
-  
+
   init(windowScene: UIWindowScene, refWindow: UIWindow, spCtrl: SpaceController) {
     _refWindow = refWindow
     _spCtrl = spCtrl
-    
+
     super.init(windowScene: windowScene)
-    
+
     frame = _refWindow.frame
     rootViewController = _spCtrl
     self.clipsToBounds = false
   }
-  
+
   required init?(coder: NSCoder) {
     fatalError("init(coder:) has not been implemented")
   }
-  
+
   override var frame: CGRect {
     get { _refWindow.frame }
     set { super.frame = _refWindow.frame }
   }
-  
-  
+
+
   @objc static var shared: ShadowWindow? = nil
 }
 
@@ -92,96 +92,57 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
   private var _lockCtrl: UIViewController? = nil
   private var _spCtrl = SpaceController()
   private var paywallWindow: UIWindow? = nil
-  
-  override init() {
-    super.init()
-    
-    let nc = NotificationCenter.default
-    nc.addObserver(self, selector: #selector(_showPaywallIfNeeded), name: .subscriptionNag, object: nil)
-  }
-  
-  deinit {
-    NotificationCenter.default.removeObserver(self)
-  }
-  
+
   public func showingPaywall() -> Bool {
     self.paywallWindow != nil
   }
-  
+
   override var editingInteractionConfiguration: UIEditingInteractionConfiguration {
     super.editingInteractionConfiguration
   }
-  
+
   @objc private func _showPaywallIfNeeded() {
-//    if FeatureFlags.checkReceipt {
-//      return
-//    }
-    
     let entitlements = EntitlementsManager.shared
-    let doShowPaywall = entitlements.doShowPaywall()
-    
-    // we are showing plans for keys
-    if entitlements.navigationSteps.contains(.plans) {
-      if !doShowPaywall {
-        entitlements.navigationSteps = []
-      }
+
+    let doShowPaywall = !entitlements.hasActiveSubscriptions()
+
+    guard doShowPaywall else {
       return
     }
-    
-    // we are showing offer in settings
-    if let navCtrl = entitlements.navigationCtrl {
-      if !doShowPaywall {
-        navCtrl.popToRootViewController(animated: true)
-      }
-      entitlements.navigationCtrl = nil
-      
-      return
-    }
-    
-    guard doShowPaywall
-    else {
-      if let window = self.paywallWindow {
-        if window.rootViewController?.presentedViewController != nil {
-          // We are showing migration view. It will close itself
-          return
-        }
-        UIView.animate(withDuration: 0.5) {
-          window.layer.opacity = 0;
-        } completion: { _ in
-          self.paywallWindow = nil
-          UIApplication.shared.sendAction(Selector("showWalkthroughAction"), to: self._spCtrl, from: nil, for: nil)
-        }
-      }
-      
-      return
-    }
-    
+
     guard let windowScene = self.window?.windowScene else {
       return
     }
-    
+
     _ = KBTracker.shared.input?.resignFirstResponder()
-    
+
     guard self.paywallWindow == nil else {
       return
     }
-      
-    self.paywallWindow = UIWindow(windowScene: windowScene)
-    self.paywallWindow?.windowLevel = .statusBar + 0.5
-    UIPageControl.appearance().currentPageIndicatorTintColor = UIColor.blinkTint
-    let view = InitialOfferingWindow(urlHandler: blink_openurl)
+
+    let paywallWindow = UIWindow(windowScene: windowScene)
+    paywallWindow.windowLevel = .statusBar + 0.5
+    self.paywallWindow = paywallWindow
+
+    let view = NewIntroPageWindow(urlHandler: blink_openurl,
+                                  dismissHandler: {
+                                    UIView.animate(withDuration: 0.5) {
+                                      paywallWindow.layer.opacity = 0;
+                                    } completion: { _ in
+                                      self.paywallWindow = nil
+                                    }
+                                  })
     let ctrl = StatusBarLessViewController(rootView: view)
     ctrl.lockPortrait = UIDevice.current.userInterfaceIdiom == .phone
-    self.paywallWindow?.rootViewController = ctrl
-    self.paywallWindow?.makeKeyAndVisible()
-    self.paywallWindow?.layer.opacity = 0;
+    paywallWindow.rootViewController = ctrl
+    paywallWindow.makeKeyAndVisible()
+    paywallWindow.layer.opacity = 0;
 
     UIView.animate(withDuration: 0.3) {
-      self.paywallWindow?.layer.opacity = 1;
+      paywallWindow.layer.opacity = 1;
     }
-    
   }
-  
+
   func sceneDidDisconnect(_ scene: UIScene) {
     if scene == ShadowWindow.shared?.refWindow.windowScene {
       ShadowWindow.shared?.layer.removeFromSuperlayer()
@@ -192,7 +153,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
       ShadowWindow.shared?.windowScene = UIApplication.shared.connectedScenes.activeAppScene(exclude: scene)
     }
   }
-  
+
   /**
    Handles the `ssh://` URL schemes and x-callback-url for devices that are running iOS 13 or higher.
    */
@@ -208,49 +169,49 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
       _handleCodeUrlScheme(with: httpScheme)
     }
   }
-  
+
   func scene(
     _ scene: UIScene,
     willConnectTo session: UISceneSession,
     options connectionOptions: UIScene.ConnectionOptions)
   {
     _ = KBTracker.shared
-    
+
     guard let windowScene = scene as? UIWindowScene else {
       return
     }
-    
+
     defer {
       self._showPaywallIfNeeded()
     }
-    
+
     #if targetEnvironment(macCatalyst)
       if let titlebar = windowScene.titlebar {
         titlebar.titleVisibility = .hidden
         titlebar.autoHidesToolbarInFullScreen = true
       }
     #endif
-    
+
     let conditions = scene.activationConditions
-    
+
     conditions.canActivateForTargetContentIdentifierPredicate = NSPredicate(value: true)
     conditions.prefersToActivateForTargetContentIdentifierPredicate = NSPredicate(format: "SELF == 'blink://open-scene/\(scene.session.persistentIdentifier)'")
-    
+
     _spCtrl.sceneRole = session.role
     _spCtrl.restoreWith(stateRestorationActivity: session.stateRestorationActivity)
-    
+
     if session.role == .windowExternalDisplayNonInteractive,
       let mainScene = UIApplication.shared.connectedScenes.activeAppScene() {
-      
+
       if BLKDefaults.overscanCompensation() == .BKBKOverscanCompensationMirror {
         return
       }
-      
+
       let window = ExternalWindow(windowScene: windowScene)
       self.window = window
-      
+
       let shadowWin: ShadowWindow
-      
+
       if let win = ShadowWindow.shared {
         win.refWindow = window
         _spCtrl = win.spaceController
@@ -259,34 +220,34 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         shadowWin = ShadowWindow(windowScene: mainScene, refWindow: window, spCtrl: _spCtrl)
         ShadowWindow.shared = shadowWin
       }
-      
+
       window.shadowWindow = shadowWin
-      
+
       shadowWin.makeKeyAndVisible()
-      
+
       window.rootViewController = UIViewController()
       window.layer.addSublayer(shadowWin.layer)
-      
+
 //      window.makeKeyAndVisible()
       window.isHidden = false
       shadowWin.windowLevel = .init(rawValue: UIWindow.Level.normal.rawValue - 1)
-      
+
       return
     }
-    
+
     let window = UIWindow(windowScene: windowScene)
     self.window = window
-    
+
     window.rootViewController = _spCtrl
     window.isHidden = false
-    
+
     // Await until scene and streams are ready
     // NOTE We could also store the contexts and use them later.
     DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
       self.scene(scene, openURLContexts: connectionOptions.urlContexts)
     }
   }
-  
+
   private func _lockNonInteractiveScreenIfNeeded() {
     guard
       let window = ShadowWindow.shared?.refWindow,
@@ -294,63 +255,63 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     else {
       return
     }
-    
+
     if LocalAuth.shared.lockRequired {
       if let lockCtrl = sceneDelegate._lockCtrl {
         if window.rootViewController != lockCtrl {
           window.rootViewController = lockCtrl
         }
-        
+
         return
       }
-      
-      
+
+
       sceneDelegate._lockCtrl = UIHostingController(rootView: LockView(unlockAction: nil))
       window.rootViewController = _lockCtrl
       return
     }
-    
-    
+
+
     if window.rootViewController == _lockCtrl {
       window.rootViewController = UIViewController()
     }
     _lockCtrl = nil
-    
+
     if let shadowWin = ShadowWindow.shared {
       window.layer.addSublayer(shadowWin.layer)
     }
   }
-  
+
   func sceneDidBecomeActive(_ scene: UIScene) {
     guard let window = window else {
       return
     }
-   
+
     // 0. Local Auth AutoLock Check on old screens
     _lockNonInteractiveScreenIfNeeded()
-    
-    
+
+
     if window == ShadowWindow.shared?.refWindow {
       return
     }
-    
-    
+
+
     // 1. Local Auth AutoLock Check
-    
+
     if LocalAuth.shared.lockRequired {
       if let lockCtrl = _lockCtrl {
         if window.rootViewController != lockCtrl {
           window.rootViewController = lockCtrl
         }
-        
+
         return
       }
-      
+
       let unlockAction = scene.session.role == .windowApplication ? LocalAuth.shared.unlock : nil
-      
+
       _lockCtrl = UIHostingController(rootView: LockView(unlockAction: unlockAction))
       window.rootViewController = _lockCtrl
-      
+
       unlockAction?()
 
       return
@@ -358,51 +319,51 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     _lockCtrl = nil
     LocalAuth.shared.stopTrackTime()
-    
+
     if let shadowWindow = ShadowWindow.shared,
       shadowWindow.windowScene == scene,
       let refScene = shadowWindow.refWindow.windowScene {
       ShadowWindow.shared?.refWindow.windowScene?.delegate?.sceneDidBecomeActive?(refScene)
     }
-    
+
     // 2. Set space controller back and refresh layout
-    
+
     let spCtrl = _spCtrl
-    
+
     if window.rootViewController != spCtrl {
       window.rootViewController = spCtrl
     }
-    
+
     guard let term = spCtrl.currentTerm() else {
       return
     }
-    
+
     term.resumeIfNeeded()
     term.view?.setNeedsLayout()
-    
+
     if let paywallWindow = paywallWindow {
       _ = KBTracker.shared.input?.resignFirstResponder()
       paywallWindow.makeKeyAndVisible()
       return;
     }
-    
-    // We can present config or stuck view. 
+
+    // We can present config or stuck view.
     guard spCtrl.presentedViewController == nil else {
       return
     }
-    
+
     // 3. Stuck Key Check
-    
+
     let input = KBTracker.shared.input
     if let key = input?.stuckKey() {
       debugPrint("BK:", "stuck!!!")
       input?.setTrackingModifierFlags([])
-      
+
       if input?.isHardwareKB == true && key == .commandLeft {
         let ctrl = UIHostingController(rootView: StuckView(keyCode: key, dismissAction: {
           spCtrl.onStuckOpCommand()
         }))
-        
+
         ctrl.modalPresentationStyle = .formSheet
         spCtrl.stuckKeyCode = key
         spCtrl.present(ctrl, animated: false)
@@ -410,11 +371,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         return
       }
     }
-    
+
     spCtrl.stuckKeyCode = nil
-    
+
     // 4. Focus Check
-    
+
     if input == nil {
       DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.1) {
         if self.paywallWindow != nil {
@@ -428,7 +389,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
       }
       return
     }
-    
+
     if term.termDevice.view?.isFocused() == false,
       input?.isRealFirstResponder == false,
       input?.window === window {
@@ -441,10 +402,10 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
           spCtrl.focusOnShellAction()
         }
       }
-      
+
       return
     }
-    
+
     if input?.window === window {
       DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.1) {
         if self.paywallWindow != nil {
@@ -458,15 +419,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
       return
     }
-    
+
     input?.reportStateReset()
   }
-  
+
   func stateRestorationActivity(for scene: UIScene) -> NSUserActivity? {
     _setDummyVC()
     return _spCtrl.stateRestorationActivity()
   }
-  
+
   private func _setDummyVC() {
     if let _ = _spCtrl.presentedViewController {
       return
@@ -476,7 +437,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     window?.rootViewController = _ctrl
     _ctrl.view.addSubview(_spCtrl.view)
   }
-  
+
   @objc var spaceController: SpaceController { _spCtrl }
 
 }
@@ -490,30 +451,30 @@ fileprivate extension URL {
 
 // MARK: Manage the `scene(_:openURLContexts:)` actions
 extension SceneDelegate {
-  
+
   /*
    Handles the `ssh://` URL schemes and x-callback-url for devices that are running iOS 13 or higher.
    - Parameters:
      - xCallbackUrl: The x-callback-url specified by the user
    */
   private func _handleSshUrlScheme(with sshUrl: URL) {
-    
+
     var sshCommand = "ssh"
-    
+
     // Progressively unwrap all of the parameters available on the URL to form
     // the SSH command to be later passed to the shell
     if let port = sshUrl.port {
       sshCommand += " -p \(port)"
     }
-    
+
     if let username = sshUrl.user {
       sshCommand += " \(username)@"
     }
-    
+
     if let host = sshUrl.host {
       sshCommand += "\(host)"
     }
-    
+
     guard let term = _spCtrl.currentTerm() else {
       return
     }
@@ -524,7 +485,7 @@ extension SceneDelegate {
        term.termDevice.write(sshCommand)
        return
     }
-    
+
     // If a SSH/mosh connection is already open in the current terminal shell
     // create a new one and then write the command
     _spCtrl.newShellAction()
@@ -537,88 +498,88 @@ extension SceneDelegate {
        newTerm.termDevice.write(sshCommand)
     }
   }
-  
+
   /**
    Handles the x-callback-url, if  a successful `x-success` URL is provided when being called from apps like Shortcuts it returns to the original app after a successful execution.
     - Parameters:
       - xCallbackUrl: The x-callback-url specified by the user, URL format should be `blinkshell://run?key=KEY&cmd=CMD%20ENCODED`
    */
   private func _handleXcallbackUrl(with xCallbackUrl: URL) {
-    
+
     let components = URLComponents(url: xCallbackUrl, resolvingAgainstBaseURL: true)
-    
+
     var xCancelURL: URL?
     var xSuccessURL: URL?
     var xErrorURL: URL?
-    
+
     guard let items = components?.queryItems else {
       return
     }
-    
+
     if let xCancel = items.first(where: { $0.name == "x-cancel" })?.value {
       xCancelURL = URL(string: xCancel)
     }
-    
+
     if let xError = items.first(where: { $0.name == "x-error" })?.value {
       xErrorURL = URL(string: xError)
     }
-    
+
     if let xSuccess = items.first(where: { $0.name == "x-success" })?.value {
       xSuccessURL = URL(string: xSuccess)
     }
-        
+
     guard case xCallbackUrl.host = "run" else {
       if let xErrorURL = xErrorURL {
         blink_openurl(xErrorURL)
       }
       return
     }
-    
+
     guard BLKDefaults.isXCallBackURLEnabled() else {
       if let xCancelURL = xCancelURL {
         blink_openurl(xCancelURL)
       }
       return
     }
-    
+
     // Cancel execution of the command if the x-callback-url doesn't have a
     // key field present that is needed to allow URL actions
     guard let keyItem: String = items.first(where: { $0.name == "key" })?.value else {
-      
+
       if let xCancelURL = xCancelURL {
         blink_openurl(xCancelURL)
       }
-      
+
       return
     }
-    
+
     // Cancel the execution of the command as x-callback-url are not
     // enabled for the user's or the x-callback-url does not have
     // the correct key set
     guard keyItem == BLKDefaults.xCallBackURLKey() else {
-      
+
       if let xErrorURL = xErrorURL {
         blink_openurl(xErrorURL)
       }
       return
     }
-    
+
     guard let cmdItem: String = items.first(where: { $0.name == "cmd" })?.value else {
       if let xErrorURL = xErrorURL {
         blink_openurl(xErrorURL)
       }
       return
     }
-    
+
     guard let term = _spCtrl.currentTerm() else {
       if let xErrorURL = xErrorURL {
         blink_openurl(xErrorURL)
       }
       return
     }
-    
+
     _spCtrl.focusOnShellAction()
-    
+
     // If SSH/mosh session is already open in the current terminal shell
     // create a new one and then write the SSH command
     guard term.isRunningCmd() else {
@@ -627,7 +588,7 @@ extension SceneDelegate {
       term.xCallbackLineSubmitted(cmdItem, xSuccessURL)
       return
     }
-    
+
     // If a SSH/mosh connection is already open in the current terminal shell
     // create a new one and then write the command
     _spCtrl.newShellAction()
@@ -640,7 +601,7 @@ extension SceneDelegate {
       newTerm.xCallbackLineSubmitted(cmdItem, xSuccessURL)
     }
   }
-  
+
   // vscode://<path_to_file>
   // vscode://<repository>
   // vscode://github.codespaces/connect?name=
@@ -699,7 +660,7 @@ extension SceneDelegate {
       newTerm.termDevice.write("\n")
     }
   }
-  
+
   private func _handleHttpUrlScheme(with url: URL) {
     _spCtrl.newShellAction()
     guard let newTerm = _spCtrl.currentTerm() else {

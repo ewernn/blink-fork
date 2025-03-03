@@ -38,6 +38,7 @@ fileprivate let trialSupportRequestID = "trial-support-request"
 
 enum TrialProgressNotification {
   case OneWeek
+  case TwoWeeks
   case OneMonth
 }
 
@@ -59,13 +60,16 @@ extension TrialProgressNotification {
     var notifyAfterDays: Int
     switch self {
     case .OneWeek:
-      notifyAfterDays = 5
+      notifyAfterDays = 7 - 2
       content.body = "Your trial will convert in 2 days."
+    case .TwoWeeks:
+      notifyAfterDays = 14 - 3
+      content.body = "Your trial will convert in 3 days."
     case .OneMonth:
-      notifyAfterDays = 23
+      notifyAfterDays = 30 - 7
       content.body = "Your trial will convert in 7 days."
     }
-    
+
     let targetDate = Calendar.current.date(byAdding: .day, value: notifyAfterDays, to: Date())!
     var dateComponents = Calendar.current.dateComponents([.year, .month, .day], from: targetDate)
     dateComponents.hour = 12
@@ -90,17 +94,21 @@ extension TrialProgressNotification {
       notifyAfterDays = 3
       content.title = "You are in day 3 of your trial..."
       content.body = "And we are here to help setting things up. Type `config` on the shell and ask!"
+    case .TwoWeeks:
+      notifyAfterDays = 5
+      content.title = "You are in day 5 of your trial..."
+      content.body = "And we are here to help setting things up. Type `config` on the shell and ask!"
     case .OneMonth:
       notifyAfterDays = 7
       content.title = "You are in day 7 of your trial..."
       content.body = "And we are here to help setting things up. Type `config` on the shell and ask!"
     }
-    
+
     let targetDate = Calendar.current.date(byAdding: .day, value: notifyAfterDays, to: Date())!
     var dateComponents = Calendar.current.dateComponents([.year, .month, .day], from: targetDate)
     dateComponents.hour = 12
     dateComponents.minute = 0
-    
+
     let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents,
                                                 repeats: false)
 
