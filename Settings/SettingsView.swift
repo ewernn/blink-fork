@@ -188,7 +188,7 @@ struct SettingsView: View {
           SupportView()
         }
         Row {
-          Label("Feedback", systemImage: "bubble.left")
+          Label("Community", systemImage: "bubble.left")
         } details: {
           FeedbackView()
         }

@@ -38,13 +38,13 @@ struct FeedbackView: View {
         Section(header: Text("Community")) {
           HStack {
             Button {
-              BKLinkActions.sendToTwitter()
+              BKLinkActions.sendToDiscord()
             } label: {
-              Label("Twitter", systemImage: "link")
+              Label("Discord", systemImage: "link")
             }
-            
+
             Spacer()
-            Text("@BlinkShell").foregroundColor(.secondary)
+            Text("").foregroundColor(.secondary)
           }
           HStack {
             Button {
@@ -52,11 +52,20 @@ struct FeedbackView: View {
             } label: {
               Label("Github", systemImage: "link")
             }
-            
+
             Spacer()
             Text("/blinksh").foregroundColor(.secondary)
           }
-          
+          HStack {
+            Button {
+              BKLinkActions.sendToTwitter()
+            } label: {
+              Label("Twitter", systemImage: "link")
+            }
+
+            Spacer()
+            Text("@BlinkShell").foregroundColor(.secondary)
+          }
           HStack {
             Button {
               BKLinkActions.sendToReddit()
@@ -66,18 +75,8 @@ struct FeedbackView: View {
             Spacer()
             Text("r/BlinkShell").foregroundColor(.secondary)
           }
-          HStack {
-            Button {
-              BKLinkActions.sendToDiscord()
-            } label: {
-              Label("Discord", systemImage: "link")
-            }
-            
-            Spacer()
-            Text("").foregroundColor(.secondary)
-          } 
         }
-        
+
         Section(footer:Text("Support development by making Blink 5 stars!")) {
           HStack {
             Button {
@@ -85,7 +84,7 @@ struct FeedbackView: View {
             } label: {
               Label("Rate Blink", systemImage: "star")
             }
-            
+
             Spacer()
             Text("App Store").foregroundColor(.secondary)
           }
@@ -95,4 +94,3 @@ struct FeedbackView: View {
       .navigationTitle("Feedback")
     }
 }
-

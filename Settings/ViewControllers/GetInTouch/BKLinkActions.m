@@ -49,13 +49,15 @@
   }
 }
 
-+ (void)sendToGitHub:(NSString *)location
-{
-  NSURL *githubURL = [NSURL URLWithString:@"https://github.com/blinksh"];
++ (void)sendToGitHub:(NSString *)location {
+  NSURLComponents *components = [NSURLComponents componentsWithString:@"https://github.com/blinksh"];
+    
   if (location) {
-    githubURL = [githubURL URLByAppendingPathComponent:location];
+    NSString *fullURLString = [NSString stringWithFormat:@"%@/%@", components.string, location];
+    components = [NSURLComponents componentsWithString:fullURLString];
   }
-  blink_openurl(githubURL);
+   
+  blink_openurl(components.URL);
 }
 
 + (void)sendToAppStore

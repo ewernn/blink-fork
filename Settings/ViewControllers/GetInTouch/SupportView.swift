@@ -36,10 +36,10 @@ import RevenueCat
 struct SupportView: View {
   @EnvironmentObject private var _nav: Nav
   @State var displayWalkthrough = false
-  
+
   var body: some View {
     List {
-      Section() {
+      Section(header: Text("Learn")) {
         HStack {
           Button { displayWalkthrough = true }
           label: {
@@ -58,54 +58,52 @@ struct SupportView: View {
           Text("").foregroundColor(.secondary)
         }
       }
-      Section(header: Text("Tracker")) {
+      Section(header: Text("Send Feedback")) {
         HStack {
           Button {
-            BKLinkActions.send(toGitHub: "blink/issues")
+            BKLinkActions.send(toGitHub: "blink/discussions/new?category=support")
           } label: {
-            Label("Known Issues", systemImage: "magnifyingglass")
+            Label("Ask a Question", systemImage: "questionmark.bubble")
           }
-          
+
           Spacer()
           Text("").foregroundColor(.secondary)
         }
         HStack {
           Button {
-            BKLinkActions.send(toGitHub: "blink/issues/new")
+            BKLinkActions.send(toGitHub: "blink/discussions/new?category=ideas")
           } label: {
-            Label("Report a Problem", systemImage: "plus")
+            Label("Suggest a Feature", systemImage: "star.bubble")
           }
-          
+
           Spacer()
           Text("").foregroundColor(.secondary)
         }
-      }
-      
-      Section(header:Text("Contact us")) {
+
+        HStack {
+          Button {
+            BKLinkActions.send(toGitHub: "blink/discussions")
+          } label: {
+            Label("Discussions", systemImage: "bubble")
+          }
+
+          Spacer()
+          Text("Github").foregroundColor(.secondary)
+        }
+
         HStack {
           Button {
             BKLinkActions.sendToDiscordSupport()
           } label: {
-            Label("Discord", systemImage: "ellipsis.bubble")
+            Label("#support", systemImage: "ellipsis.bubble")
           }
-          
+
           Spacer()
-          Text("#support").foregroundColor(.secondary)
-        }
-        
-        HStack {
-          Button {
-            BKLinkActions.sendToGithubDiscussions()
-          } label: {
-            Label("GitHub", systemImage: "exclamationmark.bubble")
-          }
-          
-          Spacer()
-          Text("Discussions").foregroundColor(.secondary)
+          Text("Discord").foregroundColor(.secondary)
         }
       }
-      
-      Section {
+
+      Section(header: Text("Internals")) {
         Button {
           UIPasteboard.general.string = Purchases.shared.appUserID
         } label: {
