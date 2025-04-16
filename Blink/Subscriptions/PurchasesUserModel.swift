@@ -205,6 +205,17 @@ class PurchasesUserModel: ObservableObject {
     return await _purchase(product)
   }
 
+  func restorePurchasesAndCheckActiveSubscriptions() async -> Bool {
+    await restorePurchases()
+    
+    if EntitlementsManager.shared.hasActiveSubscriptions() {
+      return true
+    } else {
+      self.alertErrorMessage = "Could not find any active subscriptions."
+      return false
+    }
+  }
+  
   func restorePurchases() async {
     self.restoreInProgress = true
 

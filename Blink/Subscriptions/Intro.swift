@@ -367,13 +367,10 @@ struct NewOfferingTermsButtons: View {
     HStack {
       Button("RESTORE") {
         Task {
-          
-          await _purchases.restorePurchases()
-            
-          if EntitlementsManager.shared.hasActiveSubscriptions() {
+          if await _purchases.restorePurchasesAndCheckActiveSubscriptions() {
+            // If we wanted to differentiate a restore vs purchase, could pass as param here.
             purchaseCompletedHandler()
           }
-          
         }
       }
         .foregroundColor(BlinkColors.termsText).font(BlinkFonts.btnSub)
