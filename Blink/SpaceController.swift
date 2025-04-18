@@ -230,9 +230,24 @@ class SpaceController: UIViewController {
     
 //    view.addSubview(_faceCam)
 //    addChild(_faceCam.controller)
+    DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { self.alertSubscriptionGroupViolation() }
   }
   
-
+  func alertSubscriptionGroupViolation() {
+    // NOTE: Added just in case, as I have seen in RevCat some users ending up in both groups (bc
+    // things can still be selected outside the App).
+    let msg = """
+You may be in two different subscription groups and hence, you may end up overpaying for Blink.
+Please go to your subscriptions and cancel one of them!
+"""
+    
+    if EntitlementsManager.shared.groupsCheckViolation() {
+      let ctrl = UIAlertController(title: "Important!", message: msg, preferredStyle: .alert)
+      ctrl.addAction(UIAlertAction(title: "Ok", style: .default))
+      self.present(ctrl, animated: true)
+    }
+  }
+  
   func showAlert(msg: String) {
     let ctrl = UIAlertController(title: "Error", message: msg, preferredStyle: .alert)
     ctrl.addAction(UIAlertAction(title: "Ok", style: .default))

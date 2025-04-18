@@ -158,6 +158,16 @@ public class EntitlementsManager: ObservableObject, EntitlementsSourceDelegate {
     print(currentPlanName())
     return customerTier() != CustomerTier.Free
   }
+  
+  public func groupsCheckViolation() -> Bool {
+    if activeSubscriptions.contains(ProductBlinkPlusBuildBasicID) &&
+        (activeSubscriptions.contains(ProductBlinkPlusID) ||
+         activeSubscriptions.contains(ProductBlinkShellPlusID)) {
+      return true
+    }
+    
+    return false
+  }
 }
 
 public enum CustomerTier {
