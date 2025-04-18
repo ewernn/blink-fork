@@ -81,6 +81,10 @@ class PurchasesUserModel: ObservableObject {
   }
 
   func purchaseBuildBasic() async {
+    if await restoreBlinkBuildEntitlements(alertIfNone: false) {
+      return
+    }
+    
     guard let product = buildBasicProduct else {
       self.alertErrorMessage = "Product should be loaded"
       return
@@ -115,13 +119,12 @@ class PurchasesUserModel: ObservableObject {
     }
   }
 
-  func purchaseBlinkPlusBuildWithTrialValidation(setupTrial: Bool) async -> Bool {
-    let duration: TrialDuration = setupTrial ? .oneMonth : .no
-    return await _purchaseWithTrialValidation(product: blinkPlusBuildBasicProduct, setupTrialDuration: duration)
-  }
-
   func purchaseBlinkPlusWithTrialValidation(setupTrial: Bool) async -> Bool {
     let duration: TrialDuration = setupTrial ? .twoWeeks : .no
+    // Restore before purchase and check entitlements, because Blink Plus may come from different groups on previous Blink+Build.
+    if await self.restoreBlinkPlusEntitlements(alertIfNone: false) {
+      return true
+    }
     return await _purchaseWithTrialValidation(product: blinkPlusProduct, setupTrialDuration: duration)
   }
 
@@ -205,18 +208,50 @@ class PurchasesUserModel: ObservableObject {
     return await _purchase(product)
   }
 
-  func restorePurchasesAndCheckActiveSubscriptions() async -> Bool {
-    await restorePurchases()
+//  func restorePurchasesAndCheckActiveSubscriptions() async -> Bool {
+//    await restorePurchases()
+//    
+//    if EntitlementsManager.shared.hasActiveSubscriptions() {
+//      return true
+//    } else {
+//      self.alertErrorMessage = "Could not find any active subscriptions."
+//      return false
+//    }
+//  }
+//
+  
+  func restoreBlinkPlusEntitlements(alertIfNone: Bool) async -> Bool {
+    await _restorePurchases()
     
-    if EntitlementsManager.shared.hasActiveSubscriptions() {
+    if EntitlementsManager.shared.earlyAccessFeatures.active,
+       EntitlementsManager.shared.unlimitedTimeAccess.active {
+      self.restoredPurchaseMessage = "We have restored your subscriptions. Thanks for your support!"
+      self.restoredPurchaseMessageVisible = true
       return true
     } else {
-      self.alertErrorMessage = "Could not find any active subscriptions."
+      if alertIfNone {
+        self.alertErrorMessage = "Could not find a valid purchase for Blink Plus."
+      }
       return false
     }
   }
   
-  func restorePurchases() async {
+  func restoreBlinkBuildEntitlements(alertIfNone: Bool) async -> Bool {
+    await _restorePurchases()
+    
+    if EntitlementsManager.shared.build.active {
+      self.restoredPurchaseMessage = "We have restored your subscriptions. Thanks for your support!"
+      self.restoredPurchaseMessageVisible = true
+      return true
+    } else {
+      if alertIfNone {
+        self.alertErrorMessage = "Could not find Blink Build entitlements in your subscription."
+      }
+      return false
+    }
+  }
+  
+  private func _restorePurchases() async {
     self.restoreInProgress = true
 
     defer {
@@ -225,12 +260,11 @@ class PurchasesUserModel: ObservableObject {
     }
 
     do {
-      let result = try await Purchases.shared.restorePurchases()
+      let _ = try await Purchases.shared.restorePurchases()
 
       if EntitlementsManager.shared.build.active {
         await BuildAccountModel.shared.trySignIn()
       }
-
     } catch {
       self.alertErrorMessage = error.localizedDescription
     }

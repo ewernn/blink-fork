@@ -367,10 +367,8 @@ struct NewOfferingTermsButtons: View {
     HStack {
       Button("RESTORE") {
         Task {
-          if await _purchases.restorePurchasesAndCheckActiveSubscriptions() {
-            // If we wanted to differentiate a restore vs purchase, could pass as param here.
-            purchaseCompletedHandler()
-          }
+          // The UI will show an alert and transition there. No need to check the status here.
+          let _ = await _purchases.restoreBlinkPlusEntitlements(alertIfNone: true)
         }
       }
         .foregroundColor(BlinkColors.termsText).font(BlinkFonts.btnSub)
@@ -575,7 +573,7 @@ struct NewOfferingsView: View {
         }
         .padding(.top, 16)
         .background(BlinkColors.bg.opacity(0.2)) //
-        .alert("Info", isPresented: $_purchases.restoredPurchaseMessageVisible) {
+        .alert("Thank you!", isPresented: $_purchases.restoredPurchaseMessageVisible) {
           Button("OK") {
             self.purchaseCompletedHandler()
           }

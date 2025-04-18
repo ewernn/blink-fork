@@ -397,7 +397,7 @@ struct BuildIntroView: View {
             Button("Terms of Use", action: {
               _account.openTermsOfService()
             }).padding(.trailing)
-            Button("Restore Purchases", action: { Task { await _purchases.restorePurchases() }})
+            Button("Restore Purchases", action: { Task { await _purchases.restoreBlinkBuildEntitlements(alertIfNone: true) }})
             Spacer()
           }.padding(.bottom).disabled(_purchases.restoreInProgress)
         }
