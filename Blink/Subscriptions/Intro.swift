@@ -368,7 +368,7 @@ struct NewOfferingTermsButtons: View {
       Button("RESTORE") {
         Task {
           // The UI will show an alert and transition there. No need to check the status here.
-          let _ = await _purchases.restoreBlinkPlusEntitlements(alertIfNone: true)
+          let _ = await _purchases.restoreActiveAppSubscriptions(alertIfNone: true)
         }
       }
         .foregroundColor(BlinkColors.termsText).font(BlinkFonts.btnSub)
@@ -555,11 +555,7 @@ struct NewOfferingsView: View {
         VStack {
           Button(blinkPlusSubscribeButtonText()) {
             Task {
-              let trialSelection = _purchases.blinkPlusIntroOfferAvailable() ? doTrialNotification : false
-              let success = await _purchases.purchaseBlinkPlusWithTrialValidation(setupTrial: trialSelection)
-              if success {
-                self.purchaseCompletedHandler()
-              }
+              await self.purchaseBlinkPlus()
             }
           }.buttonStyle(BlinkButtonStyle.cta(disabled: _purchases.restoreInProgress || _purchases.purchaseInProgress,
                                              inProgress: _purchases.purchaseInProgress || _purchases.restoreInProgress || _purchases.formattedBlinkPlusPriceWithPeriod() == nil, minWidth: minButtonWidth))
@@ -592,6 +588,20 @@ struct NewOfferingsView: View {
       return "TRY IT FREE FOR 14 DAYS"
     } else {
       return "BUY \(price)"
+    }
+  }
+  
+  func purchaseBlinkPlus() async {
+    // Restore before purchase and check entitlements, because Blink Plus may come from different groups on previous Blink+Build.
+    if await _purchases.restoreBlinkPlusEntitlements(alertIfNone: false) {
+      self.purchaseCompletedHandler()
+      return
+    }
+    
+    let trialSelection = _purchases.blinkPlusIntroOfferAvailable() ? doTrialNotification : false
+    let success = await _purchases.purchaseBlinkPlusWithTrialValidation(setupTrial: trialSelection)
+    if success {
+      self.purchaseCompletedHandler()
     }
   }
 }

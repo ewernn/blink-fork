@@ -81,10 +81,6 @@ class PurchasesUserModel: ObservableObject {
   }
 
   func purchaseBuildBasic() async {
-    if await restoreBlinkBuildEntitlements(alertIfNone: false) {
-      return
-    }
-    
     guard let product = buildBasicProduct else {
       self.alertErrorMessage = "Product should be loaded"
       return
@@ -121,10 +117,7 @@ class PurchasesUserModel: ObservableObject {
 
   func purchaseBlinkPlusWithTrialValidation(setupTrial: Bool) async -> Bool {
     let duration: TrialDuration = setupTrial ? .twoWeeks : .no
-    // Restore before purchase and check entitlements, because Blink Plus may come from different groups on previous Blink+Build.
-    if await self.restoreBlinkPlusEntitlements(alertIfNone: false) {
-      return true
-    }
+    
     return await _purchaseWithTrialValidation(product: blinkPlusProduct, setupTrialDuration: duration)
   }
 
@@ -207,18 +200,21 @@ class PurchasesUserModel: ObservableObject {
 
     return await _purchase(product)
   }
+  
+  func restoreActiveAppSubscriptions(alertIfNone: Bool) async -> Bool {
+    await _restorePurchases()
 
-//  func restorePurchasesAndCheckActiveSubscriptions() async -> Bool {
-//    await restorePurchases()
-//    
-//    if EntitlementsManager.shared.hasActiveSubscriptions() {
-//      return true
-//    } else {
-//      self.alertErrorMessage = "Could not find any active subscriptions."
-//      return false
-//    }
-//  }
-//
+    if EntitlementsManager.shared.hasActiveSubscriptions() {
+      self.restoredPurchaseMessage = "We have restored your subscriptions. Thanks for your support!"
+      self.restoredPurchaseMessageVisible = true
+      return true
+    } else {
+      if alertIfNone {
+        self.alertErrorMessage = "Could not find an active subscription. Please contact us if you are having trouble."
+      }
+      return false
+    }
+  }
   
   func restoreBlinkPlusEntitlements(alertIfNone: Bool) async -> Bool {
     await _restorePurchases()

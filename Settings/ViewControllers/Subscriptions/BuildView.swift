@@ -358,7 +358,7 @@ struct BuildIntroView: View {
             } else {
               Button {
                 Task {
-                  await _purchases.purchaseBuildBasic()
+                  await self.purchaseBuildBasic()
                 }
               } label: {
                 Text(_purchases.isBuildBasicTrialEligible ? "Try it Free" : "Subscribe")
@@ -409,6 +409,15 @@ struct BuildIntroView: View {
       .padding(.bottom)
       .tint(Color("BuildColor"))
     }
+  }
+  
+  func purchaseBuildBasic() async {
+    // Restore because Blink Build may come from the other group.
+    if await _purchases.restoreBlinkBuildEntitlements(alertIfNone: false) {
+      return
+    }
+    
+    await _purchases.purchaseBuildBasic()
   }
 }
 
