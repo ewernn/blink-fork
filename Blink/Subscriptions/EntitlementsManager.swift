@@ -72,31 +72,31 @@ public protocol EntitlementsSource: AnyObject {
 }
 
 public class EntitlementsManager: ObservableObject, EntitlementsSourceDelegate {
-
+  
   public static let shared = EntitlementsManager([AppStoreEntitlementsSource()])
-
+  
   @Published var unlimitedTimeAccess: Entitlement = .inactiveUnlimitedScreenTime
   @Published var earlyAccessFeatures: Entitlement = .earlyAccessFeatures
   @Published var build: Entitlement = .build
-
+  
   @Published var activeSubscriptions: Set<String> = .init()
   @Published var nonSubscriptionTransactions: Set<String> = .init()
-
+  
   private let _sources: [EntitlementsSource]
-
+  
   private init(_ sources: [EntitlementsSource]) {
     _sources = sources
     for s in sources {
       s.delegate = self
     }
   }
-
+  
   public func startUpdates() {
     for s in _sources {
       s.startUpdates()
     }
   }
-
+  
   public func didUpdateEntitlements(
     source: EntitlementsSource,
     entitlements: Dictionary<String, Entitlement>,
@@ -106,21 +106,21 @@ public class EntitlementsManager: ObservableObject, EntitlementsSourceDelegate {
     // TODO: merge stategy from multiple sources
     self.activeSubscriptions = activeSubscriptions
     self.nonSubscriptionTransactions = nonSubscriptionTransactions
-
+    
     let oldValue = self.unlimitedTimeAccess;
     if let newValue = entitlements[UnlimitedScreenTimeEntitlementID] {
       self.unlimitedTimeAccess = newValue
     }
-
+    
     if let newValue = entitlements[EarlyAccessFeaturesEntitlementID] {
       self.earlyAccessFeatures = newValue
     }
-
+    
     if let newValue = entitlements[BuildEntitlementID] {
       self.build = newValue
     }
   }
-
+  
   public func currentPlanName() -> String {
     if FeatureFlags.earlyAccessFeatures {
       return "TestFlight Plan"
@@ -139,9 +139,11 @@ public class EntitlementsManager: ObservableObject, EntitlementsSourceDelegate {
     }
     return "Free Plan"
   }
-
+  
   public func customerTier() -> CustomerTier {
-    if activeSubscriptions.contains(ProductBlinkShellPlusID)  || activeSubscriptions.contains(ProductBlinkPlusID){
+    if activeSubscriptions.contains(ProductBlinkShellPlusID)  || activeSubscriptions.contains(ProductBlinkPlusID)
+        || activeSubscriptions.contains(ProductBlinkPlusBuildBasicID)
+    {
       return CustomerTier.Plus
     }
     if nonSubscriptionTransactions.contains(ProductBlinkShellClassicID) {
