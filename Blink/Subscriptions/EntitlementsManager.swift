@@ -126,10 +126,18 @@ public class EntitlementsManager: ObservableObject, EntitlementsSourceDelegate {
       return "TestFlight Plan"
     }
     if activeSubscriptions.contains(ProductBlinkShellPlusID) {
-      return "Blink+ Plan"
+      if self.earlyAccessFeatures.period == .Trial {
+        return "Blink+ Trial"
+      } else {
+        return "Blink+ Plan"
+      }
     }
     if activeSubscriptions.contains(ProductBlinkPlusID) {
-      return "Blink+ Plan"
+      if self.earlyAccessFeatures.period == .Trial {
+        return "Blink+ Trial"
+      } else {
+        return "Blink+ Plan"
+      }
     }
     if activeSubscriptions.contains(ProductBlinkPlusBuildBasicID) {
       return "Blink+Build Plan"
