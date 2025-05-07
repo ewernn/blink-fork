@@ -364,37 +364,43 @@ struct NewOfferingTermsButtons: View {
   let urlHandler: (URL) -> ()
 
   var body: some View {
-    HStack {
-      Button("RESTORE") {
-        Task {
-          // The UI will show an alert and transition there. No need to check the status here.
-          let _ = await _purchases.restoreActiveAppSubscriptions(alertIfNone: true)
+    VStack {
+      HStack {
+        Button("RESTORE") {
+          Task {
+            // The UI will show an alert and transition there. No need to check the status here.
+            let _ = await _purchases.restoreActiveAppSubscriptions(alertIfNone: true)
+          }
         }
+          .foregroundColor(BlinkColors.termsText).font(BlinkFonts.btnSub)
+
+        Text("•").foregroundColor(BlinkColors.termsText).font(BlinkFonts.btnSub)
+
+        Button("FAQ") {
+          urlHandler(URL(string: "https://docs.blink.sh/faq#pricing")!)
+        }
+          .foregroundColor(BlinkColors.termsText).font(BlinkFonts.btnSub)
+
+        Text("•").foregroundColor(BlinkColors.termsText).font(BlinkFonts.btnSub)
+
+        Button("TERMS") {
+          _purchases.openTermsOfUse()
+        }
+          .foregroundColor(BlinkColors.termsText).font(BlinkFonts.btnSub)
+
+        Text("•").foregroundColor(BlinkColors.termsText).font(BlinkFonts.btnSub)
+        Button("COPY ID") {
+          UIPasteboard.general.string = _purchases.getUserID()
+        }
+          .foregroundColor(BlinkColors.termsText).font(BlinkFonts.btnSub)
+
       }
-        .foregroundColor(BlinkColors.termsText).font(BlinkFonts.btnSub)
-
-      Text("•").foregroundColor(BlinkColors.termsText).font(BlinkFonts.btnSub)
-
-      Button("FAQ") {
-        urlHandler(URL(string: "https://docs.blink.sh/faq#pricing")!)
-      }
-      .foregroundColor(BlinkColors.termsText).font(BlinkFonts.btnSub)
-
-      Text("•").foregroundColor(BlinkColors.termsText).font(BlinkFonts.btnSub)
-
-      Button("TERMS") {
-        _purchases.openTermsOfUse()
-      }
-      .foregroundColor(BlinkColors.termsText).font(BlinkFonts.btnSub)
-
-      Text("•").foregroundColor(BlinkColors.termsText).font(BlinkFonts.btnSub)
-      Button("COPY ID") {
-        UIPasteboard.general.string = _purchases.getUserID()
-      }
-        .foregroundColor(BlinkColors.termsText).font(BlinkFonts.btnSub)
+        .padding()
+      Text("\(UIApplication.blinkShortVersion())")
+        .foregroundColor(BlinkColors.termsText)
+        .font(BlinkFonts.btnSub)
 
     }
-      .padding()
   }
 }
 
