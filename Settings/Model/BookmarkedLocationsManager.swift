@@ -38,7 +38,7 @@ struct BookmarkedLocation: Codable, Identifiable {
   var id: String { self.name }
   let name: String
   private let bookmarkData: Data
-  let url: URL
+  let url: URL?
   let isStale: Bool
 
   fileprivate init(name: String, location: URL) throws {
@@ -53,7 +53,14 @@ struct BookmarkedLocation: Codable, Identifiable {
     self.name = try container.decode(String.self, forKey: .name)
     self.bookmarkData = try container.decode(Data.self, forKey: .bookmarkData)
     var isStale = false
-    self.url = try URL(resolvingBookmarkData: bookmarkData, options: .withoutUI, relativeTo: nil, bookmarkDataIsStale: &isStale)
+    if let url = try? URL(resolvingBookmarkData: bookmarkData, options: .withoutUI, relativeTo: nil, bookmarkDataIsStale: &isStale) {
+      self.url = url
+    } else {
+      // The URL can still fail internally (with a "no file provider found" error), even though the underlying data is correct.
+      // I think this should have been handled through a "stale" state instead, so I follow that here.
+      self.url = nil
+      isStale = true
+    }
     self.isStale = isStale
   }
 
@@ -68,6 +75,9 @@ struct BookmarkedLocation: Codable, Identifiable {
   }
 
   func refresh() throws -> BookmarkedLocation {
+    guard let url = self.url else {
+      return self
+    }
     return try Self(name: name, location: url)
   }
 }
@@ -99,7 +109,7 @@ struct BookmarkedLocation: Codable, Identifiable {
       throw Self.Error.locationNameExists
     }
 
-    var storedLocations = try loadLocations()
+    var storedLocations = try readLocations()
 
     guard location.startAccessingSecurityScopedResource() else {
       throw Self.Error.locationNotAvailable
@@ -107,10 +117,11 @@ struct BookmarkedLocation: Codable, Identifiable {
 
     try fm.createSymbolicLink(at: symlinkURL, withDestinationURL: location)
 
-    let bookmarkedLocation = try BookmarkedLocation(name: name, location: location)
-    storedLocations.append(bookmarkedLocation)
+    let bookmarkedLocation: BookmarkedLocation
     do {
-      try saveLocations(storedLocations)
+      bookmarkedLocation = try BookmarkedLocation(name: name, location: location)
+      storedLocations.append(bookmarkedLocation)
+      try writeLocations(storedLocations)
     } catch {
       try? FileManager.default.removeItem(at: symlinkURL)
       throw error
@@ -126,25 +137,28 @@ struct BookmarkedLocation: Codable, Identifiable {
       try? FileManager.default.removeItem(at: symlinkURL)
     }
 
-    var locations = try loadLocations()
+    var locations = try readLocations()
     if let index = locations.firstIndex(where: { $0.name == name }) {
       let location = locations[index]
-      location.url.stopAccessingSecurityScopedResource()
+      location.url?.stopAccessingSecurityScopedResource()
       locations.remove(at: index)
-      try saveLocations(locations)
+      try writeLocations(locations)
     }
   }
 
   func getLocations() throws -> [BookmarkedLocation] {
-    let storedLocations = try loadLocations()
+    let storedLocations = try readLocations()
     let validLocations = _syncWithStoredLocations(storedLocations)
-    try saveLocations(validLocations)
+    if storedLocations.count != validLocations.count {
+      try writeLocations(validLocations)
+    }
     return validLocations
   }
 
-  private func loadLocations() throws -> [BookmarkedLocation] {
+  private func readLocations() throws -> [BookmarkedLocation] {
     do {
       guard fm.fileExists(atPath: storedLocationsURL.path()) else {
+        try? self.writeLocations([])
         return []
       }
       let data = try Data(contentsOf: storedLocationsURL)
@@ -162,10 +176,14 @@ struct BookmarkedLocation: Codable, Identifiable {
       var location = location
       if location.isStale {
         guard let newLocation = try? location.refresh() else { continue }
+        if newLocation.isStale {
+          continue
+        }
         location = newLocation
       }
 
-      guard location.url.startAccessingSecurityScopedResource() else { continue }
+      guard let url = location.url,
+            url.startAccessingSecurityScopedResource() else { continue }
       let symlinkURL = symlinkBaseDirectory.appendingPathComponent(location.name)
       let symlinkPath = symlinkURL.path()
 
@@ -183,7 +201,7 @@ struct BookmarkedLocation: Codable, Identifiable {
         }
       }
 
-      guard (try? fm.createSymbolicLink(at: symlinkURL, withDestinationURL: location.url)) != nil else {
+      guard (try? fm.createSymbolicLink(at: symlinkURL, withDestinationURL: url)) != nil else {
         continue
       }
 
@@ -193,7 +211,7 @@ struct BookmarkedLocation: Codable, Identifiable {
     return validLocations
   }
 
-  private func saveLocations(_ locations: [BookmarkedLocation]) throws {
+  private func writeLocations(_ locations: [BookmarkedLocation]) throws {
     do {
       let data = try JSONEncoder().encode(locations)
       try data.write(to: storedLocationsURL, options: .atomic)
@@ -203,10 +221,11 @@ struct BookmarkedLocation: Codable, Identifiable {
   }
 
   @objc func getLocationURLs() -> [URL] {
-    (try? self.getLocations().map { $0.url }) ?? []
+    // After syncing the locations, all of them should have a valid URL.
+    (try? self.getLocations().map { $0.url! }) ?? []
   }
 
   @objc func getLocationPaths() -> [String] {
-    (try? self.getLocations().map { $0.url.path }) ?? []
+    (try? self.getLocations().map { $0.url!.path }) ?? []
   }
 }
