@@ -34,7 +34,6 @@
 }
 
 
-import MBProgressHUD
 import SwiftUI
 
 
@@ -58,9 +57,7 @@ class SpaceController: UIViewController {
   
   private var _viewportsKeys = [UUID]()
   private var _currentKey: UUID? = nil
-  
-  private var _hud: MBProgressHUD? = nil
-  
+    
   private var _overlay = UIView()
   private var _spaceControllerAnimating: Bool = false
   private weak var _termViewToFocus: TermView? = nil
@@ -498,58 +495,31 @@ Please go to your subscriptions and cancel one of them!
   }
   
   private func _displayHUD() {
-    _hud?.hide(animated: false)
-    
-    guard let term = currentTerm() else {
-      return
-    }
-    
-    let params = term.sessionParams
-    
-    if let bgColor = term.view.backgroundColor, bgColor != .clear {
-      view.backgroundColor = bgColor
-      _viewportsController.view.backgroundColor = bgColor
-      view.window?.backgroundColor = bgColor
-    }
-    
-    let hud = MBProgressHUD.showAdded(to: _overlay, animated: _hud == nil)
-    
-    hud.mode = .customView
-    hud.bezelView.color = .darkGray
-    hud.contentColor = .white
-    hud.isUserInteractionEnabled = false
-    hud.alpha = 0.6
-    
-    let pages = UIPageControl()
-    pages.currentPageIndicatorTintColor = .blinkHudDot
-    pages.numberOfPages = _viewportsKeys.count
-    let pageNum = _viewportsKeys.firstIndex(of: term.meta.key)
-    pages.currentPage = pageNum ?? NSNotFound
-    
-    hud.customView = pages
-    
-    let title = term.title?.isEmpty == true ? nil : term.title
-    
-    var sceneTitle = "[\(pageNum == nil ? 1 : pageNum! + 1) of \(_viewportsKeys.count)] \(title ?? "blink")"
-    
-    if params.rows == 0 && params.cols == 0 {
-      hud.label.numberOfLines = 1
-      hud.label.text = title ?? "blink"
-    } else {
-      let geometry = "\(params.cols)×\(params.rows)"
-      hud.label.numberOfLines = 2
-      hud.label.text = "\(title ?? "blink")\n\(geometry)"
+      guard let term = currentTerm() else {
+          return
+      }
       
-      sceneTitle += " | " + geometry
-    }
-    
-    _hud = hud
-    hud.hide(animated: true, afterDelay: 1)
-    
-    view.window?.windowScene?.title = sceneTitle
-    self.view.setNeedsLayout()
+      let params = term.sessionParams
+      
+      if let bgColor = term.view.backgroundColor, bgColor != .clear {
+          view.backgroundColor = bgColor
+          _viewportsController.view.backgroundColor = bgColor
+          view.window?.backgroundColor = bgColor
+      }
+      
+      // Update window title
+      let pageNum = _viewportsKeys.firstIndex(of: term.meta.key)
+      let title = term.title?.isEmpty == true ? nil : term.title
+      var sceneTitle = "[\(pageNum == nil ? 1 : pageNum! + 1) of \(_viewportsKeys.count)] \(title ?? "blink")"
+      
+      if params.rows != 0 && params.cols != 0 {
+          let geometry = "\(params.cols)×\(params.rows)"
+          sceneTitle += " | " + geometry
+      }
+      
+      view.window?.windowScene?.title = sceneTitle
+      self.view.setNeedsLayout()
   }
-  
 }
 
 // MARK: UIStateRestorable

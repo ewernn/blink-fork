@@ -102,13 +102,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
   }
 
   @objc private func _showPaywallIfNeeded() {
-    let entitlements = EntitlementsManager.shared
-
-    let doShowPaywall = !entitlements.hasActiveSubscriptions()
-
-    guard doShowPaywall else {
-      return
-    }
+    // Bypass paywall - always return early as if user has active subscription
+    return
 
     guard let windowScene = self.window?.windowScene else {
       return

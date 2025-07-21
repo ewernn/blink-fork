@@ -92,6 +92,20 @@ public class EntitlementsManager: ObservableObject, EntitlementsSourceDelegate {
   }
   
   public func startUpdates() {
+    // Force all entitlements to be active
+    self.unlimitedTimeAccess = Entitlement(id: UnlimitedScreenTimeEntitlementID, 
+                                           active: true,
+                                           unlockProductID: nil,
+                                           period: .Normal)
+    self.earlyAccessFeatures = Entitlement(id: EarlyAccessFeaturesEntitlementID,
+                                           active: true,
+                                           unlockProductID: nil,
+                                           period: .Normal)
+    self.build = Entitlement(id: BuildEntitlementID,
+                            active: true,
+                            unlockProductID: nil,
+                            period: .Normal)
+    
     for s in _sources {
       s.startUpdates()
     }
@@ -149,24 +163,13 @@ public class EntitlementsManager: ObservableObject, EntitlementsSourceDelegate {
   }
   
   public func customerTier() -> CustomerTier {
-    if activeSubscriptions.contains(ProductBlinkShellPlusID)  || activeSubscriptions.contains(ProductBlinkPlusID)
-        || activeSubscriptions.contains(ProductBlinkPlusBuildBasicID)
-    {
-      return CustomerTier.Plus
-    }
-    if nonSubscriptionTransactions.contains(ProductBlinkShellClassicID) {
-      return CustomerTier.Classic
-    }
-    if PublishingOptions.current == .testFlight {
-      return CustomerTier.TestFlight
-    }
-
-    return CustomerTier.Free
+    // Bypass tier check - always return Plus tier for all features
+    return CustomerTier.Plus
   }
 
   public func hasActiveSubscriptions() -> Bool {
-    print(currentPlanName())
-    return customerTier() != CustomerTier.Free
+    // Bypass subscription check - always return true
+    return true
   }
   
   public func groupsCheckViolation() -> Bool {

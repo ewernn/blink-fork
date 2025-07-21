@@ -200,8 +200,16 @@
     }
   } else if ([cmd isEqualToString:@"ssh2"]) {
     [self _runSSHWithArgs:cmdline];
+  } else if ([cmd isEqualToString:@"ssh"]) {
+    [self _runSSHWithArgs:cmdline];
   } else if ([cmd isEqualToString:@"ssh-copy-id"]) {
     [self _runSSHCopyIDWithArgs:cmdline];
+  } else if ([cmd isEqualToString:@"config"]) {
+    // Hardcoded config command handler since dynamic loading is broken
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [[UIApplication sharedApplication] sendAction:NSSelectorFromString(@"showConfigAction") to:nil from:nil forEvent:nil];
+    });
+    return YES;
   } else if (![cmd isEqualToString:@""]) {
     // Manually set raw mode for some commands, as we cannot receive control any other way.
     [_device closeReadline];

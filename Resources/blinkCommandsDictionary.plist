@@ -58,6 +58,13 @@
 		<string></string>
 		<string>no</string>
 	</array>
+	<key>ssh-keygen</key>
+	<array>
+		<string>MAIN</string>
+		<string>blink_ssh_keygen</string>
+		<string>t:b:C:f:N:</string>
+		<string>no</string>
+	</array>
 	<key>ssh-add</key>
 	<array>
 		<string>MAIN</string>

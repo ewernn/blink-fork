@@ -58,7 +58,8 @@ public class AppStoreEntitlementsSource: NSObject, EntitlementsSource, Purchases
   }
   
   public func startUpdates() {
-    Purchases.shared.delegate = self
+    // Disabled - no phone home to RevenueCat
+    return
   }
 }
 
@@ -78,12 +79,6 @@ fileprivate extension EntitlementPeriodType {
 }
 
 func configureRevCat() {
-  Purchases.logLevel = .debug
-  let cfg = Configuration
-    .builder(withAPIKey: XCConfig.infoPlistRevCatPubliKey())
-    .with(appUserID: nil)
-    .with(userDefaults: UserDefaults.suite)
-    .build()
-
-  Purchases.configure(with: cfg)
+  // Disabled RevenueCat for security - no phone home
+  return
 }

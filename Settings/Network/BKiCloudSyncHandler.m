@@ -57,66 +57,14 @@ static BKiCloudSyncHandler *sharedHandler = nil;
 
 + (instancetype)sharedHandler
 {
-  if ([BKUserConfigurationManager userSettingsValueForKey:BKUserConfigiCloud]) {
-    if (sharedHandler == nil) {
-      sharedHandler = [[self alloc] init];
-    }
-    return sharedHandler;
-  } else {
-    //If user settings is turned off, return nil, so that all messages are ignored
-    [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
-    return nil;
-  }
+  // Disabled for security - no iCloud sync
+  return nil;
 }
 
 - (instancetype)init
 {
-  self = [super init];
-  if (self) {
-    
-    BKiCloudContainerIdentifier = [XCConfig infoPlistFullCloudID];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(checkForReachabilityAndSync:) name:kReachabilityChangedNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(checkForReachabilityAndSync:) name:UIApplicationDidBecomeActiveNotification object:nil];
-    _internetReachable = [Reachability reachabilityForInternetConnection];
-    [_internetReachable startNotifier];
-    [self loadSyncItems];
-    CKDatabase *database = [[CKContainer containerWithIdentifier:BKiCloudContainerIdentifier] privateCloudDatabase];
-    if (!database) {
-      return nil;
-    }
-    CKRecordZone *zone = [[CKRecordZone alloc] initWithZoneName:BKiCloudZoneName];
-    if (!zone) {
-      return nil;
-    }
-    [database saveRecordZone:zone
-	   completionHandler:^(CKRecordZone *_Nullable zone, NSError *_Nullable error) {
-	     if (error) {
-         NSLog(@"iCloud save record error: %@", error);
-	       //Reset shared handler so that init is called again.
-	     }
-	   }];
-    //If Query Subscription class is available ie. iOS 10+
-    if ([CKQuerySubscription class]) {
-      NSPredicate *predicate = [NSPredicate predicateWithValue:YES];
-      CKQuerySubscription *subscripton = [[CKQuerySubscription alloc] initWithRecordType:@"BKHost" predicate:predicate options:(CKQuerySubscriptionOptionsFiresOnRecordCreation | CKQuerySubscriptionOptionsFiresOnRecordUpdate | CKQuerySubscriptionOptionsFiresOnRecordDeletion)];
-      if (!subscripton) {
-	return nil;
-      }
-
-      CKNotificationInfo *info = [[CKNotificationInfo alloc]init];
-      info.shouldSendContentAvailable = YES;
-      subscripton.notificationInfo = info;
-
-      [database saveSubscription:subscripton
-	       completionHandler:^(CKSubscription *_Nullable subscription, NSError *_Nullable error) {
-		 if (error) {
-       NSLog(@"iCloud Error: %@", error);
-		   //Reset shared handler so that init is called again.
-		 }
-	       }];
-    }
-  }
-  return self;
+  // Disabled for security - no iCloud sync
+  return nil;
 }
 
 - (void)loadSyncItems

@@ -32,13 +32,13 @@
 
 import Foundation
 
-
 @objc class Migrator : NSObject {
   @objc static func perform() {
-    Self.perform(steps: [MigrationToAppGroup(),
-                         MigrationAddSnippetsShortcut(),
-                         MigrationFileProviderReplicatedExtension()
-                        ])
+    return
+//    Self.perform(steps: [MigrationToAppGroup(),
+//                         MigrationAddSnippetsShortcut(),
+//                         MigrationFileProviderReplicatedExtension()
+//                        ])
   }
 
   static func perform(steps: [MigrationStep]) {

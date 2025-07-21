@@ -79,57 +79,28 @@ enum BuildAPIError: Error, LocalizedError {
 enum BuildAPI {
   
   static func requestService(_ request: URLRequest) async -> (Int32, Data) {
-    var signal: TokioSignals!
-    
-    return await withTaskCancellationHandler(operation: {
-      await withCheckedContinuation { (c: CheckedContinuation<(Int32, Data), Never>) in
-        let ctx = UnsafeMutablePointer<CheckedContinuation<(Int32, Data), Never>>.allocate(capacity: 1)
-        ctx.initialize(to: c)
-        
-        signal = TokioSignals.requestService(request, auth: true, ctx: ctx) { ctx, w in
-          let ref = UnsafeMutablePointer<CheckedContinuation<(Int32, Data), Never>>(OpaquePointer(ctx))
-          let c = ref.move()
-          ref.deallocate()
-          let data = Data(bytes: w.pointee.body, count: Int(w.pointee.body_len));
-          c.resume(returning: (w.pointee.code, data))
-        }
-      }
-    }, onCancel: { [signal] in
-      signal?.signalCtrlC()
-    })
-    
+    // Disabled for security - no external API calls
+    return (403, Data())
   }
   
   public static func accountInfo() async throws -> BuildAccountInfo {
-    let (code, data) = await requestService(.init(getJson: _path("/account")))
-    if code == 200 {
-      return try JSONDecoder().decode(BuildAccountInfo.self, from: data)
-    }
-    print("Unexpected response: \(code) \(String(data: data, encoding: .utf8) as Any)")
-    throw BuildAPIError.unexpectedResponseStatus(Int(code))
+    // Disabled for security
+    throw BuildAPIError.unexpectedResponseStatus(403)
   }
   
   public static func accountCurrentUsageBalance() async throws -> BuildUsageBalance {
-    let (code, data) = await requestService(.init(getJson: _path("/account/current_usage_balance")))
-    if code == 200 {
-      return try JSONDecoder().decode(BuildUsageBalance.self, from: data)
-    }
-    throw BuildAPIError.unexpectedResponseStatus(Int(code))
+    // Disabled for security
+    throw BuildAPIError.unexpectedResponseStatus(403)
   }
   
   public static func requestAccountDelete() async throws {
-    let (code, _) = await requestService(try .init(postJson: _path("/account/request_account_delete")))
-    if code == 200 {
-      return
-    }
-    throw BuildAPIError.unexpectedResponseStatus(Int(code))
+    // Disabled for security
+    throw BuildAPIError.unexpectedResponseStatus(403)
   }
   
   private static func _baseURL() -> String {
-    if FileManager.default.fileExists(atPath: BlinkPaths.blinkBuildStagingMarkURL()!.path) {
-      return "https://raw.api.blink.build"
-    }
-    return "https://api.blink.build"
+    // Disabled for security - no external API calls
+    return ""
   }
   
   private static func _path(_ path: String) -> URL {
@@ -169,73 +140,23 @@ enum BuildAPI {
   }
   
   static func signup(email: String, region: BuildRegion) async throws {
-    guard let receiptB64 = Bundle.main.receiptB64() else {
-      throw BuildAPIError.noReceipt
-    }
-    
-    let (code, data, _) = try await _post(
-      _path("/application/signup"),
-      params: [
-        "email": email,
-        "region": region.rawValue,
-        "rev_cat_user_id": Purchases.shared.appUserID,
-        "receipt_b64": receiptB64
-      ]
-    )
-
-    // 409 account exists
-    // 200 ok
-    
-    if code == 200 {
-      try await loginWithToken(token: data)
-    } else if code == 409 {
-      try await self.signin()
-    } else {
-      throw BuildAPIError.unexpectedResponseStatus(code)
-    }
+    // Disabled for security - no external API calls
+    throw BuildAPIError.unexpectedResponseStatus(403)
   }
   
   static func signin() async throws  {
-    guard let receiptB64 = Bundle.main.receiptB64() else {
-      throw BuildAPIError.noReceipt
-    }
-    
-    let (code, data, _) = try await _post(
-      _path("/application/signin"), params: [
-        "receipt_b64": receiptB64
-      ]
-    )
-    // 409 account exists
-    // 200 OK?
-    
-    if code == 200 {
-      try await loginWithToken(token: data)
-    } else {
-      throw BuildAPIError.unexpectedResponseStatus(code)
-    }
+    // Disabled for security - no external API calls
+    throw BuildAPIError.unexpectedResponseStatus(403)
   }
   
   static func trySignin() async throws {
-    guard let receiptB64 = Bundle.main.receiptB64() else {
-      throw BuildAPIError.noReceipt
-    }
-    
-    let (code, data, _) = try await _post(
-      _path("/application/signin"), params: [
-        "receipt_b64": receiptB64
-      ]
-    )
-    
-    if code == 200 {
-        try await loginWithToken(token: data)
-    }
+    // Disabled for security - no external API calls
+    return
   }
   
   static func loginWithToken(token: Data) async throws {
-    try token.write(to: BlinkPaths.blinkBuildTokenURL()!)
-    if let buildId = TokioSignals.getBuildId() {
-      let _ = try await Purchases.shared.logIn(buildId)
-    }
+    // Disabled for security - no login
+    return
   }
 }
 

@@ -67,13 +67,8 @@ class PurchasesUserModel: ObservableObject {
   static let shared = PurchasesUserModel()
 
   private func refreshProducts() {
-    if self.blinkShellPlusProduct == nil
-        || self.classicProduct == nil
-        || self.buildBasicProduct == nil
-        || self.blinkPlusBuildBasicProduct == nil {
-      self.fetchProducts()
-      self.fetchTrialEligibility()
-    }
+    // Disabled for security - no product fetching
+    return
   }
 
   private func refreshTokens() {
@@ -81,7 +76,7 @@ class PurchasesUserModel: ObservableObject {
   }
 
   func purchaseBuildBasic() async {
-    guard let product = buildBasicProduct else {
+    guard buildBasicProduct != nil else {
       self.alertErrorMessage = "Product should be loaded"
       return
     }
@@ -100,19 +95,8 @@ class PurchasesUserModel: ObservableObject {
       self.purchaseInProgress = false
     }
 
-    do {
-      let (_, _, canceled) = try await Purchases.shared.purchase(product: product)
-      if canceled {
-        return
-      }
-
-      await BuildAccountModel.shared.trySignIn()
-      withAnimation {
-        self.purchaseInProgress = false
-      }
-    } catch {
-      self.alertErrorMessage = error.localizedDescription
-    }
+    // Disabled for security - no purchases
+    self.alertErrorMessage = "Purchases disabled for security"
   }
 
   func purchaseBlinkPlusWithTrialValidation(setupTrial: Bool) async -> Bool {
@@ -137,15 +121,12 @@ class PurchasesUserModel: ObservableObject {
     blinkPlusIntroOffer?.status == IntroEligibilityStatus.eligible
   }
 
-  func getUserID() -> String { Purchases.shared.appUserID }
+  func getUserID() -> String { "local-user" }
 
   private func _purchase(_ product: StoreProduct) async -> Bool {
     do {
-      let result = try await Purchases.shared.purchase(product: product)
-      if result.userCancelled {
-        return false
-      }
-      return true
+      // Disabled for security - no purchases
+      throw NSError(domain: "PurchasesDisabled", code: 403, userInfo: [NSLocalizedDescriptionKey: "Purchases disabled for security"])
     } catch {
       self.alertErrorMessage = "Could not continue with purchase - \(error.localizedDescription)"
       return false
@@ -182,7 +163,7 @@ class PurchasesUserModel: ObservableObject {
       self.purchaseInProgress = false
     }
 
-    if let notification: TrialProgressNotification = switch setupTrialDuration {
+    let notification: TrialProgressNotification? = switch setupTrialDuration {
     case .no:
       nil
     case .oneWeek:
@@ -191,7 +172,9 @@ class PurchasesUserModel: ObservableObject {
       TrialProgressNotification.TwoWeeks
     case .oneMonth:
       TrialProgressNotification.OneMonth
-    } {
+    }
+    
+    if let notification = notification {
       let success = await _setupTrialProgressNotification(notification)
       if !success {
         return false
@@ -255,15 +238,8 @@ class PurchasesUserModel: ObservableObject {
       self.restoreInProgress = false
     }
 
-    do {
-      let _ = try await Purchases.shared.restorePurchases()
-
-      if EntitlementsManager.shared.build.active {
-        await BuildAccountModel.shared.trySignIn()
-      }
-    } catch {
-      self.alertErrorMessage = error.localizedDescription
-    }
+    // Disabled for security - no restore purchases
+    return
   }
 
   func formattedPlusPriceWithPeriod() -> String? {
@@ -283,47 +259,13 @@ class PurchasesUserModel: ObservableObject {
   }
 
   private func fetchProducts() {
-    Purchases.shared.getProducts([
-      ProductBlinkShellClassicID,
-      ProductBlinkShellPlusID,
-      ProductBlinkBuildBasicID,
-      ProductBlinkPlusBuildBasicID,
-      ProductBlinkPlusID
-    ]) { products in
-      DispatchQueue.main.async {
-        for product in products {
-          let productID = product.productIdentifier
-
-          if productID == ProductBlinkShellPlusID {
-            self.blinkShellPlusProduct = product
-          } else if productID == ProductBlinkShellClassicID {
-            self.classicProduct = product
-          } else if productID == ProductBlinkBuildBasicID {
-            self.buildBasicProduct = product
-          } else if productID == ProductBlinkPlusBuildBasicID {
-            self.blinkPlusBuildBasicProduct = product
-          } else if productID == ProductBlinkPlusID {
-            self.blinkPlusProduct = product
-          }
-        }
-      }
-    }
+    // Disabled for security - no product fetching
+    return
   }
 
   private func fetchTrialEligibility() {
-    Purchases.shared.checkTrialOrIntroDiscountEligibility(
-      productIdentifiers: [
-        ProductBlinkBuildBasicID,
-        ProductBlinkPlusBuildBasicID,
-        ProductBlinkPlusID
-      ],
-      completion: { map in
-        DispatchQueue.main.async {
-          self.blinkBuildTrial = map[ProductBlinkBuildBasicID]
-          self.blinkPlusBuildTrial = map[ProductBlinkPlusBuildBasicID]
-          self.blinkPlusIntroOffer = map[ProductBlinkPlusID]
-        }
-      })
+    // Disabled for security - no trial eligibility checking
+    return
   }
 
   private lazy var _emailPredicate: NSPredicate = {
@@ -434,9 +376,9 @@ extension StoreProduct {
 @objc public class PurchasesUserModelObjc: NSObject {
 
   @objc public static func preparePurchasesUserModel() {
-    configureRevCat()
+    // Disabled for security - no RevenueCat configuration
     EntitlementsManager.shared.startUpdates()
-    _ = PurchasesUserModel.shared
+    // Don't initialize PurchasesUserModel to avoid accessing uninitialized Purchases.shared
   }
 }
 

@@ -161,6 +161,13 @@ static void kbd_callback(const char *name, int name_len,
   // tty -t
   // key -i identity file
   // forced password
+  
+  // Debug: Log all arguments
+  [self debugMsg:[NSString stringWithFormat:@"SSH called with %d arguments:", argc]];
+  for (int i = 0; i < argc; i++) {
+    [self debugMsg:[NSString stringWithFormat:@"  argv[%d]: %s", i, argv[i]]];
+  }
+  
   optind = 1;
   
   while (1) {
@@ -312,15 +319,26 @@ static void kbd_callback(const char *name, int name_len,
   _identities = [[NSMutableArray alloc] init];
   BKPubKey *pk;
   
+  [self debugMsg:[NSString stringWithFormat:@"Loading identity files, identity_file option: %s", 
+                  _options.identity_file ? _options.identity_file : "NULL"]];
+  
   if (_options.identity_file) {
-    if ((pk = [BKPubKey withID:[NSString stringWithUTF8String:_options.identity_file]]) != nil) {
+    NSString *keyID = [NSString stringWithUTF8String:_options.identity_file];
+    [self debugMsg:[NSString stringWithFormat:@"Looking for key with ID: %@", keyID]];
+    if ((pk = [BKPubKey withID:keyID]) != nil) {
+      [self debugMsg:[NSString stringWithFormat:@"Found key: %@", pk.ID]];
       [_identities addObject:pk];
+    } else {
+      [self debugMsg:[NSString stringWithFormat:@"Key not found: %@", keyID]];
     }
   }
   
   if ((pk = [BKPubKey withID:@"id_rsa"]) != nil) {
+    [self debugMsg:@"Adding default id_rsa key"];
     [_identities addObject:pk];
   }
+  
+  [self debugMsg:[NSString stringWithFormat:@"Total identities loaded: %lu", (unsigned long)_identities.count]];
 }
 
 // Hosts and no hosts tested
@@ -562,8 +580,11 @@ static void kbd_callback(const char *name, int name_len,
 - (int)ssh_login_publickey:(const char *)user
 {
   // Try all the identities until finding a successful one, and return
+  [self debugMsg:[NSString stringWithFormat:@"Trying public key authentication for user: %s", user]];
+  [self debugMsg:[NSString stringWithFormat:@"Number of identities to try: %lu", (unsigned long)_identities.count]];
+  
   for (BKPubKey *pk in _identities) {
-    [self debugMsg:@"Attempting authentication with publickey."];
+    [self debugMsg:[NSString stringWithFormat:@"Attempting authentication with key: %@", pk.ID]];
     int rc = 0;
     const char *pub = [pk.publicKey UTF8String];
     const char *priv = [[pk loadPrivateKey] UTF8String];
@@ -571,6 +592,29 @@ static void kbd_callback(const char *name, int name_len,
     if (!priv || !pub) {
       [self debugMsg:@"Could not find public key files."];
       return 0;
+    }
+    
+    // Debug: Log the actual key content for MacSSH
+    if ([pk.ID isEqualToString:@"MacSSH"]) {
+      [self debugMsg:@"=== MacSSH Key Debug Info ==="];
+      [self debugMsg:[NSString stringWithFormat:@"Key ID: %@", pk.ID]];
+      [self debugMsg:[NSString stringWithFormat:@"Key Type: %@", pk.keyType]];
+      [self debugMsg:[NSString stringWithFormat:@"Storage Type: %lu", (unsigned long)pk.storageType]];
+      [self debugMsg:[NSString stringWithFormat:@"Public Key Length: %lu", (unsigned long)strlen(pub)]];
+      [self debugMsg:[NSString stringWithFormat:@"Private Key Length: %lu", (unsigned long)strlen(priv)]];
+      [self debugMsg:@"Public Key (first line):"];
+      NSString *pubStr = [NSString stringWithUTF8String:pub];
+      NSArray *pubLines = [pubStr componentsSeparatedByString:@"\n"];
+      if (pubLines.count > 0) {
+        [self debugMsg:pubLines[0]];
+      }
+      [self debugMsg:@"Private Key Header:"];
+      NSString *privStr = [NSString stringWithUTF8String:priv];
+      NSArray *privLines = [privStr componentsSeparatedByString:@"\n"];
+      if (privLines.count > 0) {
+        [self debugMsg:privLines[0]];
+      }
+      [self debugMsg:@"=== End MacSSH Key Debug ==="];
     }
     
 //    char *passphrase = NULL;
@@ -596,7 +640,9 @@ static void kbd_callback(const char *name, int name_len,
       [self debugMsg:@"Authentication succeeded."];
       return 1;
     } else {
-      [self debugMsg:@"Authentication failed"];
+      char *errmsg;
+      int err = libssh2_session_last_error(_session, &errmsg, NULL, 0);
+      [self debugMsg:[NSString stringWithFormat:@"Authentication failed for key %@: error %d - %s", pk.ID, err, errmsg]];
     }
   }
   // Login with publickey failed

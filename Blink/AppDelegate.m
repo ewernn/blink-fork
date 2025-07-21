@@ -98,8 +98,11 @@ void __setupProcessEnv(void) {
 
   sideLoading = false; // Turn off extra commands from iOS system
   initializeEnvironment(); // initialize environment variables for iOS system
+  
+  // Load commands synchronously to ensure they're available immediately
+  addCommandList([[NSBundle mainBundle] pathForResource:@"blinkCommandsDictionary" ofType:@"plist"]); // Load blink commands to ios_system
+  
   dispatch_async(bgQueue, ^{
-    addCommandList([[NSBundle mainBundle] pathForResource:@"blinkCommandsDictionary" ofType:@"plist"]); // Load blink commands to ios_system
     __setupProcessEnv(); // we should call this after ios_system initializeEnvironment to override its defaults.
     [AppDelegate _loadProfileVars];
   });
@@ -161,7 +164,11 @@ void __setupProcessEnv(void) {
 
 + (void)_loadProfileVars {
   NSCharacterSet *whiteSpace = [NSCharacterSet whitespaceCharacterSet];
-  NSString *profile = [NSString stringWithContentsOfFile:[BlinkPaths blinkProfileFile] encoding:NSUTF8StringEncoding error:nil];
+  NSString *profilePath = [BlinkPaths blinkProfileFile];
+  if (!profilePath || ![[NSFileManager defaultManager] fileExistsAtPath:profilePath]) {
+    return;
+  }
+  NSString *profile = [NSString stringWithContentsOfFile:profilePath encoding:NSUTF8StringEncoding error:nil];
   [profile enumerateLinesUsingBlock:^(NSString * _Nonnull line, BOOL * _Nonnull stop) {
     NSMutableArray<NSString *> *parts = [[line componentsSeparatedByString:@"="] mutableCopy];
     if (parts.count < 2) {
